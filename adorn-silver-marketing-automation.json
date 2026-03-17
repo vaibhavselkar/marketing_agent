@@ -1,0 +1,1268 @@
+{
+  "name": "Adorn Silver Marketing Automation",
+  "description": "Complete marketing automation system for premium Indian silver jewellery brand",
+  "version": "1.0.0",
+  "author": "Marketing Automation System",
+  "workflows": {
+    "workflow_1_lead_capture": {
+      "name": "Lead Capture & Welcome Sequence",
+      "description": "Captures new leads from Google Sheets and sends welcome messages",
+      "trigger": {
+        "type": "Google Sheets",
+        "description": "New row added to Leads sheet",
+        "configuration": {
+          "sheetId": "LEADS_SHEET_ID",
+          "watchFor": "newRows",
+          "pollingInterval": "5 minutes"
+        }
+      },
+      "steps": [
+        {
+          "id": "extract_lead_data",
+          "type": "Set",
+          "description": "Extract lead information from Google Sheets row",
+          "parameters": {
+            "values": {
+              "name": "={{$json[\"Name\"]}}",
+              "phone": "={{$json[\"Phone\"]}}",
+              "email": "={{$json[\"Email\"]}}",
+              "source": "={{$json[\"Source\"]}}",
+              "interest": "={{$json[\"Interest\"]}}"
+            }
+          }
+        },
+        {
+          "id": "send_whatsapp_welcome",
+          "type": "HTTP Request",
+          "description": "Send WhatsApp welcome message via WATI/Twilio",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "welcome_message",
+              "parameters": {
+                "name": "={{$json[\"name\"]}}",
+                "discount_code": "ADORN10",
+                "collection_link": "https://adornsilver.com/collection"
+              }
+            }
+          }
+        },
+        {
+          "id": "send_welcome_email",
+          "type": "Send Email",
+          "description": "Send welcome email via Gmail/SMTP",
+          "parameters": {
+            "fromEmail": "noreply@adornsilver.com",
+            "toEmail": "={{$json[\"email\"]}}",
+            "subject": "Your Adorn Silver journey starts here 💎",
+            "html": "<p>Hi {{$json[\"name\"]}},</p><p>Welcome to Adorn Silver! We handcraft premium 925 silver jewellery for women who love elegant, meaningful pieces.</p><p>Here's 10% off your first order: <strong>ADORN10</strong></p><p>Browse our collection: <a href=\"https://adornsilver.com/collection\">adornsilver.com/collection</a></p><p>Best,<br>Team Adorn Silver</p>"
+          }
+        },
+        {
+          "id": "tag_lead_in_crm",
+          "type": "Google Sheets",
+          "description": "Update lead status and tags in CRM",
+          "parameters": {
+            "operation": "update",
+            "sheetId": "LEADS_SHEET_ID",
+            "rowId": "={{$json[\"ID\"]}}",
+            "values": {
+              "Status": "lead_new",
+              "Tags": "lead_new, source_{{ $json[\"source\"] }}, interest_{{ $json[\"interest\"] }}"
+            }
+          }
+        },
+        {
+          "id": "wait_3_days",
+          "type": "Wait",
+          "description": "Wait 3 days before follow-up",
+          "parameters": {
+            "time": "3 days"
+          }
+        },
+        {
+          "id": "send_follow_up",
+          "type": "HTTP Request",
+          "description": "Send 3-day follow-up message",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "follow_up_message",
+              "parameters": {
+                "name": "={{$json[\"name\"]}}",
+                "trending_link": "https://adornsilver.com/trending"
+              }
+            }
+          }
+        },
+        {
+          "id": "wait_7_days",
+          "type": "Wait",
+          "description": "Wait 7 days before social proof message",
+          "parameters": {
+            "time": "7 days"
+          }
+        },
+        {
+          "id": "send_social_proof",
+          "type": "HTTP Request",
+          "description": "Send social proof message with customer photos",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "social_proof_message",
+              "parameters": {
+                "name": "={{$json[\"name\"]}}",
+                "testimonials_link": "https://adornsilver.com/testimonials"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "workflow_2_instagram_dm": {
+      "name": "Instagram DM Auto-Reply (AI-Powered)",
+      "description": "Automatically responds to Instagram DMs using AI",
+      "trigger": {
+        "type": "Instagram",
+        "description": "New Instagram DM or comment",
+        "configuration": {
+          "event": "message",
+          "pageId": "INSTAGRAM_PAGE_ID",
+          "webhookUrl": "https://your-n8n-url/webhook/instagram-dm"
+        }
+      },
+      "steps": [
+        {
+          "id": "extract_message_data",
+          "type": "Set",
+          "description": "Extract message details",
+          "parameters": {
+            "values": {
+              "username": "={{$json[\"sender\"][\"username\"]}}",
+              "message": "={{$json[\"message\"][\"text\"]}}",
+              "timestamp": "={{$json[\"timestamp\"]}}"
+            }
+          }
+        },
+        {
+          "id": "detect_keyword_category",
+          "type": "IF",
+          "description": "Categorize message by keyword",
+          "parameters": {
+            "conditions": {
+              "string": [
+                {
+                  "value1": "={{$json[\"message\"]}}",
+                  "operation": "contains",
+                  "value2": "price",
+                  "output": "price_enquiry"
+                },
+                {
+                  "value1": "={{$json[\"message\"]}}",
+                  "operation": "contains",
+                  "value2": "available",
+                  "output": "availability"
+                },
+                {
+                  "value1": "={{$json[\"message\"]}}",
+                  "operation": "contains",
+                  "value2": "custom",
+                  "output": "custom_order"
+                },
+                {
+                  "value1": "={{$json[\"message\"]}}",
+                  "operation": "contains",
+                  "value2": "shipping",
+                  "output": "shipping"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "generate_ai_reply",
+          "type": "HTTP Request",
+          "description": "Generate AI response using Claude",
+          "parameters": {
+            "url": "https://api.anthropic.com/v1/messages",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "x-api-key",
+                "value": "Bearer {{CLAUDE_API_KEY}}"
+              },
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ],
+            "bodyParametersJson": {
+              "model": "claude-sonnet-4-20250513",
+              "max_tokens": 300,
+              "temperature": 0.7,
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "Generate a response for Adorn Silver to this Instagram message: \"{{$json[\"message\"]}}\". Category: {{$node[\"detect_keyword_category\"].output}}. Brand voice: warm, elegant, never pushy. Include relevant emojis and a CTA. Keep under 120 words."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "send_instagram_reply",
+          "type": "HTTP Request",
+          "description": "Send reply via Instagram API",
+          "parameters": {
+            "url": "https://graph.facebook.com/v19.0/{{INSTAGRAM_PAGE_ID}}/messages",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{INSTAGRAM_ACCESS_TOKEN}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "recipient": {
+                "id": "={{$json[\"sender\"][\"id\"]}}"
+              },
+              "message": {
+                "text": "={{$node[\"generate_ai_reply\"].json[\"content\"][0][\"text\"]}}"
+              }
+            }
+          }
+        },
+        {
+          "id": "log_conversation",
+          "type": "Google Sheets",
+          "description": "Log conversation in CRM",
+          "parameters": {
+            "operation": "append",
+            "sheetId": "CONVERSATIONS_SHEET_ID",
+            "values": [
+              "={{$json[\"username\"]}}",
+              "={{$node[\"detect_keyword_category\"].output}}",
+              "={{$node[\"generate_ai_reply\"].json[\"content\"][0][\"text\"]}}",
+              "={{$json[\"timestamp\"]}}"
+            ]
+          }
+        }
+      ]
+    },
+    "workflow_3_post_purchase": {
+      "name": "Post-Purchase Retention Flow",
+      "description": "Nurtures customers after purchase with care tips and reviews",
+      "trigger": {
+        "type": "Webhook",
+        "description": "New order from Shopify/WooCommerce/Razorpay",
+        "configuration": {
+          "path": "order-webhook",
+          "httpMethod": "POST"
+        }
+      },
+      "steps": [
+        {
+          "id": "extract_order_data",
+          "type": "Set",
+          "description": "Extract order information",
+          "parameters": {
+            "values": {
+              "customer_name": "={{$json[\"customer\"][\"name\"]}}",
+              "phone": "={{$json[\"customer\"][\"phone\"]}}",
+              "email": "={{$json[\"customer\"][\"email\"]}}",
+              "product": "={{$json[\"line_items\"][0][\"name\"]}}",
+              "order_value": "={{$json[\"total_price\"]}}",
+              "order_date": "={{$json[\"created_at\"]}}"
+            }
+          }
+        },
+        {
+          "id": "send_order_confirmation",
+          "type": "HTTP Request",
+          "description": "Send immediate order confirmation",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "order_confirmation",
+              "parameters": {
+                "name": "={{$json[\"customer_name\"]}}",
+                "order_id": "={{$json[\"id\"]}}",
+                "product": "={{$json[\"product\"]}}",
+                "order_value": "={{$json[\"order_value\"]}}"
+              }
+            }
+          }
+        },
+        {
+          "id": "wait_day_2",
+          "type": "Wait",
+          "description": "Wait 2 days for care tips",
+          "parameters": {
+            "time": "2 days"
+          }
+        },
+        {
+          "id": "send_care_tips",
+          "type": "HTTP Request",
+          "description": "Send silver jewellery care tips",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "care_tips",
+              "parameters": {
+                "name": "={{$json[\"customer_name\"]}}",
+                "care_guide_link": "https://adornsilver.com/care-guide"
+              }
+            }
+          }
+        },
+        {
+          "id": "wait_day_7",
+          "type": "Wait",
+          "description": "Wait 7 days for review request",
+          "parameters": {
+            "time": "7 days"
+          }
+        },
+        {
+          "id": "send_review_request",
+          "type": "HTTP Request",
+          "description": "Request review and photo",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "review_request",
+              "parameters": {
+                "name": "={{$json[\"customer_name\"]}}",
+                "review_link": "https://google.com/review?place_id=YOUR_PLACE_ID"
+              }
+            }
+          }
+        },
+        {
+          "id": "wait_day_30",
+          "type": "Wait",
+          "description": "Wait 30 days for re-engagement",
+          "parameters": {
+            "time": "30 days"
+          }
+        },
+        {
+          "id": "generate_recommendation",
+          "type": "HTTP Request",
+          "description": "Generate personalised recommendation using AI",
+          "parameters": {
+            "url": "https://api.anthropic.com/v1/messages",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "x-api-key",
+                "value": "Bearer {{CLAUDE_API_KEY}}"
+              },
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ],
+            "bodyParametersJson": {
+              "model": "claude-sonnet-4-20250513",
+              "max_tokens": 200,
+              "temperature": 0.7,
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "Generate a personalised product recommendation for Adorn Silver customer who bought: {{$json[\"product\"]}}. Suggest a complementary product and write a warm re-engagement message with 10% loyalty discount code. Brand voice: warm, elegant, never pushy."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "send_reengagement",
+          "type": "HTTP Request",
+          "description": "Send personalised re-engagement message",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "reengagement",
+              "parameters": {
+                "name": "={{$json[\"customer_name\"]}}",
+                "recommendation": "={{$node[\"generate_recommendation\"].json[\"content\"][0][\"text\"]}}",
+                "loyalty_code": "LOYAL10"
+              }
+            }
+          }
+        },
+        {
+          "id": "update_customer_tags",
+          "type": "Google Sheets",
+          "description": "Update customer status and tags",
+          "parameters": {
+            "operation": "update",
+            "sheetId": "CUSTOMERS_SHEET_ID",
+            "rowId": "={{$json[\"customer_id\"]}}",
+            "values": {
+              "Status": "buyer",
+              "Last Purchase": "={{$json[\"order_date\"]}}",
+              "Total Spent": "={{$json[\"order_value\"]}}",
+              "Order Count": "={{$json[\"order_count\"]}}",
+              "Tags": "buyer, product_{{ $json[\"product_category\"] }}, value_tier_{{ $json[\"order_value_tier\"] }}"
+            }
+          }
+        }
+      ]
+    },
+    "workflow_4_festival_campaigns": {
+      "name": "Festival & Campaign Broadcasts",
+      "description": "Sends festival-specific campaigns to segmented audiences",
+      "trigger": {
+        "type": "Cron",
+        "description": "Schedule-based triggers for festivals",
+        "configuration": {
+          "cronExpression": "0 9 * * *",
+          "timezone": "Asia/Kolkata"
+        }
+      },
+      "steps": [
+        {
+          "id": "check_festival_schedule",
+          "type": "Set",
+          "description": "Check if today is a festival campaign day",
+          "parameters": {
+            "values": {
+              "today": "={{$now}}",
+              "festivals": [
+                {"name": "Diwali", "date": "2024-10-31", "days_before": 7},
+                {"name": "Navratri", "date": "2024-10-03", "days_before": 7},
+                {"name": "Karva Chauth", "date": "2024-11-01", "days_before": 7},
+                {"name": "Valentine's Day", "date": "2024-02-14", "days_before": 7},
+                {"name": "Mother's Day", "date": "2024-05-12", "days_before": 7},
+                {"name": "Dhanteras", "date": "2024-10-29", "days_before": 7},
+                {"name": "New Year", "date": "2024-12-31", "days_before": 7}
+              ]
+            }
+          }
+        },
+        {
+          "id": "determine_active_festival",
+          "type": "IF",
+          "description": "Check if any festival campaign should run today",
+          "parameters": {
+            "conditions": {
+              "boolean": [
+                {
+                  "value1": "={{$json[\"festivals\"].some(f => new Date(f.date) - new Date($json[\"today\"]) <= f.days_before * 24 * 60 * 60 * 1000 && new Date(f.date) >= new Date($json[\"today\"]))}}",
+                  "operation": "isTrue"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "get_target_audience",
+          "type": "Google Sheets",
+          "description": "Get segmented audience for festival campaign",
+          "parameters": {
+            "operation": "read",
+            "sheetId": "CUSTOMERS_SHEET_ID",
+            "options": {
+              "filter": "Status = 'lead' OR Status = 'buyer'",
+              "limit": 1000
+            }
+          }
+        },
+        {
+          "id": "generate_festival_message",
+          "type": "HTTP Request",
+          "description": "Generate personalised festival message using AI",
+          "parameters": {
+            "url": "https://api.anthropic.com/v1/messages",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "x-api-key",
+                "value": "Bearer {{CLAUDE_API_KEY}}"
+              },
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ],
+            "bodyParametersJson": {
+              "model": "claude-sonnet-4-20250513",
+              "max_tokens": 300,
+              "temperature": 0.7,
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "Generate a warm, personalised festival message for Adorn Silver customer named {{$json[\"name\"]}}. Festival: {{$node[\"determine_active_festival\"].output}}. If they're a buyer, reference their last purchase: {{$json[\"last_purchase\"]}}. Include product recommendation and festival offer code. Brand voice: warm, elegant, never pushy. Include 1-2 relevant emojis."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "send_whatsapp_broadcast",
+          "type": "HTTP Request",
+          "description": "Send WhatsApp broadcast to audience",
+          "parameters": {
+            "url": "https://api.wati.io/v1/broadcast/sendTemplate",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "broadcast_name": "{{$node[\"determine_active_festival\"].output}} Campaign",
+              "template_name": "festival_message",
+              "parameters": {
+                "message": "={{$node[\"generate_festival_message\"].json[\"content\"][0][\"text\"]}}"
+              },
+              "target_list": "={{$node[\"get_target_audience\"].json}}"
+            }
+          }
+        },
+        {
+          "id": "send_email_broadcast",
+          "type": "Send Email",
+          "description": "Send email broadcast via Gmail/SMTP",
+          "parameters": {
+            "fromEmail": "noreply@adornsilver.com",
+            "toEmail": "={{$node[\"get_target_audience\"].json.map(c => c.email).join(',')}}",
+            "subject": "{{$node[\"determine_active_festival\"].output}} Special: Adorn Yourself with Love",
+            "html": "={{$node[\"generate_festival_message\"].json[\"content\"][0][\"text\"]}}"
+          }
+        },
+        {
+          "id": "generate_instagram_post",
+          "type": "HTTP Request",
+          "description": "Generate Instagram caption for festival",
+          "parameters": {
+            "url": "https://api.anthropic.com/v1/messages",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "x-api-key",
+                "value": "Bearer {{CLAUDE_API_KEY}}"
+              },
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ],
+            "bodyParametersJson": {
+              "model": "claude-sonnet-4-20250513",
+              "max_tokens": 400,
+              "temperature": 0.7,
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "Generate an Instagram caption for Adorn Silver for {{$node[\"determine_active_festival\"].output}} festival. Include 8 hashtags (mix of niche: #silverjewellery #925silver #handcraftedsilver + broad: #jewellery #indianjewellery #ootd). Brand voice: warm, elegant, aspirational. Include 2-3 relevant emojis."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "post_to_instagram",
+          "type": "HTTP Request",
+          "description": "Post to Instagram via Buffer/Make",
+          "parameters": {
+            "url": "https://api.buffer.com/1/updates/create",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{BUFFER_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "profile_ids": ["{{INSTAGRAM_PROFILE_ID}}"],
+              "text": "={{$node[\"generate_instagram_post\"].json[\"content\"][0][\"text\"]}}",
+              "media": ["https://adornsilver.com/festival-image.jpg"]
+            }
+          }
+        },
+        {
+          "id": "log_broadcast_metrics",
+          "type": "Google Sheets",
+          "description": "Log broadcast metrics and results",
+          "parameters": {
+            "operation": "append",
+            "sheetId": "ANALYTICS_SHEET_ID",
+            "values": [
+              "={{$now}}",
+              "{{$node[\"determine_active_festival\"].output}}",
+              "={{$node[\"get_target_audience\"].json.length}}",
+              "WhatsApp + Email + Instagram",
+              "Pending"
+            ]
+          }
+        }
+      ]
+    },
+    "workflow_5_content_calendar": {
+      "name": "Content Calendar Auto-Posting",
+      "description": "Automates daily content posting based on Google Sheets calendar",
+      "trigger": {
+        "type": "Cron",
+        "description": "Daily trigger at 9 AM",
+        "configuration": {
+          "cronExpression": "0 9 * * *",
+          "timezone": "Asia/Kolkata"
+        }
+      },
+      "steps": [
+        {
+          "id": "get_todays_posts",
+          "type": "Google Sheets",
+          "description": "Get posts scheduled for today",
+          "parameters": {
+            "operation": "read",
+            "sheetId": "CONTENT_CALENDAR_SHEET_ID",
+            "options": {
+              "filter": "Date = TODAY() AND Status = 'Scheduled'",
+              "limit": 10
+            }
+          }
+        },
+        {
+          "id": "process_posts",
+          "type": "SplitInBatches",
+          "description": "Process each post individually",
+          "parameters": {
+            "batchSize": 1
+          }
+        },
+        {
+          "id": "check_caption_exists",
+          "type": "IF",
+          "description": "Check if caption already exists",
+          "parameters": {
+            "conditions": {
+              "string": [
+                {
+                  "value1": "={{$json[\"Caption\"]}}",
+                  "operation": "isEmpty"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "generate_caption",
+          "type": "HTTP Request",
+          "description": "Generate caption using AI",
+          "parameters": {
+            "url": "https://api.anthropic.com/v1/messages",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "x-api-key",
+                "value": "Bearer {{CLAUDE_API_KEY}}"
+              },
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ],
+            "bodyParametersJson": {
+              "model": "claude-sonnet-4-20250513",
+              "max_tokens": 300,
+              "temperature": 0.7,
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "Generate an Instagram caption for Adorn Silver with topic: {{$json[\"Topic\"]}}. Post type: {{$json[\"Post Type\"]}}. Brand voice: warm, elegant, aspirational. Include 8 hashtags (mix of niche: #silverjewellery #925silver #handcraftedsilver + broad: #jewellery #indianjewellery #ootd). Include 2-3 relevant emojis."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "update_caption_in_sheet",
+          "type": "Google Sheets",
+          "description": "Update generated caption in content calendar",
+          "parameters": {
+            "operation": "update",
+            "sheetId": "CONTENT_CALENDAR_SHEET_ID",
+            "rowId": "={{$json[\"ID\"]}}",
+            "values": {
+              "Caption": "={{$node[\"generate_caption\"].json[\"content\"][0][\"text\"]}}"
+            }
+          }
+        },
+        {
+          "id": "post_to_instagram",
+          "type": "HTTP Request",
+          "description": "Post to Instagram via Graph API",
+          "parameters": {
+            "url": "https://graph.facebook.com/v19.0/{{INSTAGRAM_PAGE_ID}}/media",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{INSTAGRAM_ACCESS_TOKEN}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "caption": "={{$json[\"Caption\"]}}",
+              "image_url": "={{$json[\"Image URL\"]}}",
+              "media_type": "IMAGE"
+            }
+          }
+        },
+        {
+          "id": "post_to_whatsapp_status",
+          "type": "HTTP Request",
+          "description": "Post to WhatsApp Status if enabled",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/sendStatus",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "template_name": "status_update",
+              "parameters": {
+                "caption": "={{$json[\"Caption\"]}}",
+                "image_url": "={{$json[\"Image URL\"]}}"
+              }
+            }
+          }
+        },
+        {
+          "id": "update_post_status",
+          "type": "Google Sheets",
+          "description": "Update post status to 'Posted'",
+          "parameters": {
+            "operation": "update",
+            "sheetId": "CONTENT_CALENDAR_SHEET_ID",
+            "rowId": "={{$json[\"ID\"]}}",
+            "values": {
+              "Status": "Posted",
+              "Posted At": "={{$now}}",
+              "Post URL": "={{$node[\"post_to_instagram\"].json[\"id\"]}}"
+            }
+          }
+        },
+        {
+          "id": "generate_next_week_content",
+          "type": "Cron",
+          "description": "Weekly trigger to generate next week's content",
+          "configuration": {
+            "cronExpression": "0 9 * * 0",
+            "timezone": "Asia/Kolkata"
+          }
+        },
+        {
+          "id": "analyze_content_performance",
+          "type": "Google Sheets",
+          "description": "Analyze past content performance",
+          "parameters": {
+            "operation": "read",
+            "sheetId": "CONTENT_CALENDAR_SHEET_ID",
+            "options": {
+              "filter": "Posted At >= DATE_SUB(NOW(), INTERVAL 30 DAY)",
+              "limit": 100
+            }
+          }
+        },
+        {
+          "id": "generate_content_ideas",
+          "type": "HTTP Request",
+          "description": "Generate next week's content ideas using AI",
+          "parameters": {
+            "url": "https://api.anthropic.com/v1/messages",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "x-api-key",
+                "value": "Bearer {{CLAUDE_API_KEY}}"
+              },
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ],
+            "bodyParametersJson": {
+              "model": "claude-sonnet-4-20250513",
+              "max_tokens": 800,
+              "temperature": 0.7,
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "Generate 7 content ideas for Adorn Silver Instagram posts for next week. Consider: upcoming festivals ({{$json[\"upcoming_festivals\"]}}), trending topics in jewellery, and past best-performing posts ({{$node[\"analyze_content_performance\"].json}}). Include post type suggestions (Reel / Carousel / Static) and brief descriptions. Brand voice: warm, elegant, aspirational."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "save_content_ideas",
+          "type": "Google Sheets",
+          "description": "Save generated content ideas to calendar",
+          "parameters": {
+            "operation": "append",
+            "sheetId": "CONTENT_CALENDAR_SHEET_ID",
+            "values": [
+              "={{$now}}",
+              "AI Generated",
+              "Content Idea",
+              "{{$node[\"generate_content_ideas\"].json[\"content\"][0][\"text\"]}}",
+              "Scheduled",
+              "",
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    "workflow_6_customer_winback": {
+      "name": "Customer Re-engagement (Win-Back)",
+      "description": "Re-engages inactive customers with personalised offers",
+      "trigger": {
+        "type": "Cron",
+        "description": "Weekly trigger every Monday",
+        "configuration": {
+          "cronExpression": "0 9 * * 1",
+          "timezone": "Asia/Kolkata"
+        }
+      },
+      "steps": [
+        {
+          "id": "identify_inactive_customers",
+          "type": "Google Sheets",
+          "description": "Find customers inactive for 60+ days",
+          "parameters": {
+            "operation": "read",
+            "sheetId": "CUSTOMERS_SHEET_ID",
+            "options": {
+              "filter": "Status = 'buyer' AND Last Contact < DATE_SUB(NOW(), INTERVAL 60 DAY) AND Tags NOT LIKE '%inactive%'",
+              "limit": 500
+            }
+          }
+        },
+        {
+          "id": "generate_winback_message",
+          "type": "HTTP Request",
+          "description": "Generate personalised win-back message",
+          "parameters": {
+            "url": "https://api.anthropic.com/v1/messages",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "x-api-key",
+                "value": "Bearer {{CLAUDE_API_KEY}}"
+              },
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ],
+            "bodyParametersJson": {
+              "model": "claude-sonnet-4-20250513",
+              "max_tokens": 300,
+              "temperature": 0.7,
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "Generate a warm win-back message for Adorn Silver customer {{$json[\"name\"]}} who last purchased {{$json[\"last_purchase\"]}}. Reference their last purchase: {{$json[\"last_product\"]}}. Show new arrivals in their preferred category: {{$json[\"interest\"]}}. Offer loyalty discount. Brand voice: warm, elegant, never pushy. Include 1-2 relevant emojis."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "send_winback_whatsapp",
+          "type": "HTTP Request",
+          "description": "Send win-back message via WhatsApp",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "winback_message",
+              "parameters": {
+                "name": "={{$json[\"name\"]}}",
+                "message": "={{$node[\"generate_winback_message\"].json[\"content\"][0][\"text\"]}}",
+                "loyalty_code": "WELCOME15"
+              }
+            }
+          }
+        },
+        {
+          "id": "send_winback_email",
+          "type": "Send Email",
+          "description": "Send win-back email",
+          "parameters": {
+            "fromEmail": "noreply@adornsilver.com",
+            "toEmail": "={{$json[\"email\"]}}",
+            "subject": "We miss you, {{$json[\"name\"]}}! Here's something special...",
+            "html": "={{$node[\"generate_winback_message\"].json[\"content\"][0][\"text\"]}}"
+          }
+        },
+        {
+          "id": "wait_7_days",
+          "type": "Wait",
+          "description": "Wait 7 days for response",
+          "parameters": {
+            "time": "7 days"
+          }
+        },
+        {
+          "id": "send_final_message",
+          "type": "HTTP Request",
+          "description": "Send final win-back attempt with stronger offer",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "final_winback",
+              "parameters": {
+                "name": "={{$json[\"name\"]}}",
+                "stronger_offer": "20% off + free shipping"
+              }
+            }
+          }
+        },
+        {
+          "id": "tag_as_inactive",
+          "type": "Google Sheets",
+          "description": "Tag non-responsive customers as inactive",
+          "parameters": {
+            "operation": "update",
+            "sheetId": "CUSTOMERS_SHEET_ID",
+            "rowId": "={{$json[\"ID\"]}}",
+            "values": {
+              "Status": "inactive",
+              "Tags": "inactive, winback_attempted"
+            }
+          }
+        }
+      ]
+    },
+    "workflow_7_analytics_reporting": {
+      "name": "Analytics & Weekly Report",
+      "description": "Generates weekly performance reports and analytics",
+      "trigger": {
+        "type": "Cron",
+        "description": "Weekly trigger every Monday at 8 AM",
+        "configuration": {
+          "cronExpression": "0 8 * * 1",
+          "timezone": "Asia/Kolkata"
+        }
+      },
+      "steps": [
+        {
+          "id": "pull_weekly_metrics",
+          "type": "Google Sheets",
+          "description": "Pull metrics from various sheets",
+          "parameters": {
+            "operation": "read",
+            "sheetId": "ANALYTICS_SHEET_ID",
+            "options": {
+              "filter": "Date >= DATE_SUB(NOW(), INTERVAL 7 DAY)",
+              "limit": 100
+            }
+          }
+        },
+        {
+          "id": "calculate_metrics",
+          "type": "Set",
+          "description": "Calculate key performance metrics",
+          "parameters": {
+            "values": {
+              "new_leads": "={{$node[\"pull_weekly_metrics\"].json.filter(row => row.Type === 'Lead').length}}",
+              "messages_sent": "={{$node[\"pull_weekly_metrics\"].json.filter(row => row.Type === 'Message').length}}",
+              "orders_placed": "={{$node[\"pull_weekly_metrics\"].json.filter(row => row.Type === 'Order').length}}",
+              "revenue_generated": "={{$node[\"pull_weekly_metrics\"].json.filter(row => row.Type === 'Order').reduce((sum, row) => sum + parseFloat(row.Value || 0), 0)}}",
+              "instagram_dms": "={{$node[\"pull_weekly_metrics\"].json.filter(row => row.Type === 'Instagram DM').length}}",
+              "campaign_performance": "={{$node[\"pull_weekly_metrics\"].json.filter(row => row.Type === 'Campaign')}}"
+            }
+          }
+        },
+        {
+          "id": "generate_analytics_summary",
+          "type": "HTTP Request",
+          "description": "Generate plain-English weekly summary using AI",
+          "parameters": {
+            "url": "https://api.anthropic.com/v1/messages",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "x-api-key",
+                "value": "Bearer {{CLAUDE_API_KEY}}"
+              },
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ],
+            "bodyParametersJson": {
+              "model": "claude-sonnet-4-20250513",
+              "max_tokens": 500,
+              "temperature": 0.7,
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "Generate a plain-English weekly business summary for Adorn Silver based on these metrics: New leads: {{$json[\"new_leads\"]}}, Messages sent: {{$json[\"messages_sent\"]}}, Orders placed: {{$json[\"orders_placed\"]}}, Revenue: ₹{{$json[\"revenue_generated\"]}}, Instagram DMs handled: {{$json[\"instagram_dms\"]}}. Campaign performance: {{$json[\"campaign_performance\"]}}. Include insights, recommendations, and highlight best performing campaigns. Brand voice: professional, insightful, actionable."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "send_weekly_report",
+          "type": "HTTP Request",
+          "description": "Send summary to owner via WhatsApp",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "{{OWNER_PHONE}}",
+              "template_name": "weekly_report",
+              "parameters": {
+                "summary": "={{$node[\"generate_analytics_summary\"].json[\"content\"][0][\"text\"]}}",
+                "week_ending": "={{$now}}"
+              }
+            }
+          }
+        },
+        {
+          "id": "send_email_report",
+          "type": "Send Email",
+          "description": "Send detailed email report",
+          "parameters": {
+            "fromEmail": "noreply@adornsilver.com",
+            "toEmail": "{{OWNER_EMAIL}}",
+            "subject": "Adorn Silver Weekly Analytics Report - {{ $now }}",
+            "html": "<h2>Weekly Performance Summary</h2><p><strong>Week Ending:</strong> {{$now}}</p><p><strong>New Leads:</strong> {{$json[\"new_leads\"]}}</p><p><strong>Messages Sent:</strong> {{$json[\"messages_sent\"]}}</p><p><strong>Orders Placed:</strong> {{$json[\"orders_placed\"]}}</p><p><strong>Revenue Generated:</strong> ₹{{$json[\"revenue_generated\"]}}</p><p><strong>Instagram DMs Handled:</strong> {{$json[\"instagram_dms\"]}}</p><h3>Weekly Summary:</h3><p>{{$node[\"generate_analytics_summary\"].json[\"content\"][0][\"text\"]}}</p><p>Best,<br>Team Adorn Silver</p>"
+          }
+        },
+        {
+          "id": "log_analytics_to_sheet",
+          "type": "Google Sheets",
+          "description": "Log analytics summary to master sheet",
+          "parameters": {
+            "operation": "append",
+            "sheetId": "MASTER_ANALYTICS_SHEET_ID",
+            "values": [
+              "={{$now}}",
+              "{{$json[\"new_leads\"]}}",
+              "{{$json[\"messages_sent\"]}}",
+              "{{$json[\"orders_placed\"]}}",
+              "={{$json[\"revenue_generated\"]}}",
+              "{{$json[\"instagram_dms\"]}}",
+              "={{$node[\"generate_analytics_summary\"].json[\"content\"][0][\"text\"]}}"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "integrations": {
+    "google_sheets": {
+      "description": "CRM database and content calendar",
+      "credentials": {
+        "type": "OAuth2",
+        "clientId": "{{GOOGLE_SHEETS_CLIENT_ID}}",
+        "clientSecret": "{{GOOGLE_SHEETS_CLIENT_SECRET}}",
+        "refreshToken": "{{GOOGLE_SHEETS_REFRESH_TOKEN}}"
+      },
+      "sheets": {
+        "customers": "CUSTOMERS_SHEET_ID",
+        "leads": "LEADS_SHEET_ID",
+        "orders": "ORDERS_SHEET_ID",
+        "conversations": "CONVERSATIONS_SHEET_ID",
+        "content_calendar": "CONTENT_CALENDAR_SHEET_ID",
+        "analytics": "ANALYTICS_SHEET_ID",
+        "master_analytics": "MASTER_ANALYTICS_SHEET_ID"
+      }
+    },
+    "whatsapp": {
+      "description": "WhatsApp Business messaging via WATI or Twilio",
+      "provider": "WATI",
+      "credentials": {
+        "apiKey": "{{WATI_API_KEY}}",
+        "businessNumber": "{{WATI_BUSINESS_NUMBER}}"
+      }
+    },
+    "instagram": {
+      "description": "Instagram Graph API for DM handling and posting",
+      "credentials": {
+        "accessToken": "{{INSTAGRAM_ACCESS_TOKEN}}",
+        "pageId": "{{INSTAGRAM_PAGE_ID}}"
+      }
+    },
+    "claude_ai": {
+      "description": "Anthropic Claude API for message generation",
+      "credentials": {
+        "apiKey": "{{CLAUDE_API_KEY}}",
+        "model": "claude-sonnet-4-20250513"
+      }
+    },
+    "email": {
+      "description": "Email sequences via Gmail/SMTP",
+      "provider": "Gmail",
+      "credentials": {
+        "user": "noreply@adornsilver.com",
+        "password": "{{GMAIL_APP_PASSWORD}}"
+      }
+    },
+    "buffer": {
+      "description": "Social media scheduling",
+      "credentials": {
+        "apiKey": "{{BUFFER_API_KEY}}",
+        "profileId": "{{INSTAGRAM_PROFILE_ID}}"
+      }
+    }
+  },
+  "crm_schema": {
+    "customers_sheet": {
+      "columns": [
+        {"name": "ID", "type": "Auto-generated"},
+        {"name": "Name", "type": "Customer full name"},
+        {"name": "Phone", "type": "With country code"},
+        {"name": "Email", "type": "Customer email"},
+        {"name": "Source", "type": "Instagram / WhatsApp / Website / Referral"},
+        {"name": "Interest", "type": "Rings / Necklaces / Earrings / Bangles / Gifting"},
+        {"name": "Status", "type": "Lead / Warm / Buyer / Inactive"},
+        {"name": "Tags", "type": "Comma-separated: lead_new, buyer, vip, festival_buyer"},
+        {"name": "Last Contact", "type": "Date of last message sent"},
+        {"name": "Last Purchase", "type": "Date of last order"},
+        {"name": "Total Spent", "type": "Cumulative order value"},
+        {"name": "Order Count", "type": "Number of purchases"},
+        {"name": "Notes", "type": "Manual notes field"}
+      ]
+    },
+    "content_calendar_sheet": {
+      "columns": [
+        {"name": "Date", "type": "Scheduled post date"},
+        {"name": "Platform", "type": "Instagram / WhatsApp / Both"},
+        {"name": "Post Type", "type": "Reel / Carousel / Static"},
+        {"name": "Topic", "type": "Post topic/theme"},
+        {"name": "Status", "type": "Scheduled / Posted / Cancelled"},
+        {"name": "Caption", "type": "Generated caption"},
+        {"name": "Image URL", "type": "Media file URL"}
+      ]
+    }
+  },
+  "tone_and_voice_rules": {
+    "always_follow": [
+      "Always address the customer by first name",
+      "Use 1–2 relevant emojis — never overdo it",
+      "Keep messages under 120 words for WhatsApp",
+      "Never use words like 'deal', 'cheap', 'discount' as the opening — lead with value or warmth",
+      "Always include one clear CTA (call to action) with a link or code",
+      "Sign off as: Team Adorn Silver or — Adorn Silver",
+      "Festival messages must mention the festival by name",
+      "Replies to DMs must sound human, not robotic"
+    ],
+    "ai_prompt_template": "You are the marketing assistant for Adorn Silver, a premium handcrafted silver jewellery brand in India. Your job: write warm, elegant, conversion-focused messages for WhatsApp, Email, and Instagram. Rules: - Always address the customer by first name - Tone: warm, aspirational, never pushy - WhatsApp messages: max 100 words, 1-2 emojis - Email subject lines: curiosity-driven, under 8 words - Instagram captions: engaging, 3-4 lines + 8 hashtags - Always include a CTA with a link or offer code - Sign off as: Team Adorn Silver"
+  }
+}

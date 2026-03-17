@@ -1,0 +1,289 @@
+{
+  "name": "Adorn Silver - Simple Start: Instagram & WhatsApp",
+  "description": "Simplified workflows for Instagram DM responses and WhatsApp lead capture using Google Gemini API",
+  "version": "1.0.0",
+  "author": "Marketing Automation System",
+  "workflows": {
+    "workflow_1_instagram_dm_simple": {
+      "name": "Instagram DM Auto-Reply (Gemini AI)",
+      "description": "Responds to Instagram DMs instantly using Google Gemini API",
+      "trigger": {
+        "type": "Webhook",
+        "description": "Instagram webhook for new messages",
+        "configuration": {
+          "path": "instagram-dm",
+          "httpMethod": "POST",
+          "responseMode": "onReceived",
+          "responseData": "Received"
+        }
+      },
+      "steps": [
+        {
+          "id": "extract_message_data",
+          "type": "Set",
+          "description": "Extract message details from webhook",
+          "parameters": {
+            "values": {
+              "username": "={{$json[\"entry\"][0][\"messaging\"][0][\"sender\"][\"username\"]}}",
+              "message": "={{$json[\"entry\"][0][\"messaging\"][0][\"message\"][\"text\"]}}",
+              "sender_id": "={{$json[\"entry\"][0][\"messaging\"][0][\"sender\"][\"id\"]}}",
+              "timestamp": "={{$json[\"entry\"][0][\"time\"]}}"
+            }
+          }
+        },
+        {
+          "id": "detect_keyword_category",
+          "type": "IF",
+          "description": "Categorize message by keyword",
+          "parameters": {
+            "conditions": {
+              "string": [
+                {
+                  "value1": "={{$json[\"message\"]}}",
+                  "operation": "contains",
+                  "value2": "price",
+                  "output": "price_enquiry"
+                },
+                {
+                  "value1": "={{$json[\"message\"]}}",
+                  "operation": "contains",
+                  "value2": "available",
+                  "output": "availability"
+                },
+                {
+                  "value1": "={{$json[\"message\"]}}",
+                  "operation": "contains",
+                  "value2": "custom",
+                  "output": "custom_order"
+                },
+                {
+                  "value1": "={{$json[\"message\"]}}",
+                  "operation": "contains",
+                  "value2": "shipping",
+                  "output": "shipping"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "generate_gemini_response",
+          "type": "HTTP Request",
+          "description": "Generate response using Google Gemini API",
+          "parameters": {
+            "url": "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={{GEMINI_API_KEY}}",
+            "method": "POST",
+            "authentication": "None",
+            "bodyParametersJson": {
+              "contents": [
+                {
+                  "parts": [
+                    {
+                      "text": "Generate a warm, helpful response for Adorn Silver to this Instagram message: \"{{$json[\"message\"]}}\". Category: {{$node[\"detect_keyword_category\"].output}}. Brand voice: elegant, warm, never pushy. Include 1-2 relevant emojis. Keep under 100 words. Always include a friendly greeting and sign off as Team Adorn Silver."
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "extract_response_text",
+          "type": "Set",
+          "description": "Extract response text from Gemini API",
+          "parameters": {
+            "values": {
+              "response_text": "={{$node[\"generate_gemini_response\"].json[\"candidates\"][0][\"content\"][\"parts\"][0][\"text\"]}}"
+            }
+          }
+        },
+        {
+          "id": "send_instagram_reply",
+          "type": "HTTP Request",
+          "description": "Send reply via Instagram API",
+          "parameters": {
+            "url": "https://graph.facebook.com/v19.0/{{INSTAGRAM_PAGE_ID}}/messages",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{INSTAGRAM_ACCESS_TOKEN}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "recipient": {
+                "id": "={{$json[\"sender_id\"]}}"
+              },
+              "message": {
+                "text": "={{$node[\"extract_response_text\"].json[\"response_text\"]}}"
+              }
+            }
+          }
+        },
+        {
+          "id": "log_conversation",
+          "type": "Google Sheets",
+          "description": "Log conversation to Google Sheets",
+          "parameters": {
+            "operation": "append",
+            "sheetId": "CONVERSATIONS_SHEET_ID",
+            "values": [
+              "={{$json[\"username\"]}}",
+              "={{$json[\"message\"]}}",
+              "={{$node[\"extract_response_text\"].json[\"response_text\"]}}",
+              "={{$json[\"timestamp\"]}}",
+              "Instagram"
+            ]
+          }
+        }
+      ]
+    },
+    "workflow_2_whatsapp_lead_capture": {
+      "name": "WhatsApp Lead Capture & Welcome",
+      "description": "Captures leads from Google Sheets and sends WhatsApp welcome messages",
+      "trigger": {
+        "type": "Google Sheets",
+        "description": "New row added to Leads sheet",
+        "configuration": {
+          "sheetId": "LEADS_SHEET_ID",
+          "watchFor": "newRows",
+          "pollingInterval": "2 minutes"
+        }
+      },
+      "steps": [
+        {
+          "id": "extract_lead_data",
+          "type": "Set",
+          "description": "Extract lead information",
+          "parameters": {
+            "values": {
+              "name": "={{$json[\"Name\"]}}",
+              "phone": "={{$json[\"Phone\"]}}",
+              "email": "={{$json[\"Email\"]}}",
+              "source": "={{$json[\"Source\"]}}",
+              "interest": "={{$json[\"Interest\"]}}",
+              "date_added": "={{$json[\"Date Added\"]}}"
+            }
+          }
+        },
+        {
+          "id": "send_whatsapp_welcome",
+          "type": "HTTP Request",
+          "description": "Send WhatsApp welcome message",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "welcome_message",
+              "parameters": {
+                "1": "={{$json[\"name\"]}}"
+              }
+            }
+          }
+        },
+        {
+          "id": "update_lead_status",
+          "type": "Google Sheets",
+          "description": "Update lead status to contacted",
+          "parameters": {
+            "operation": "update",
+            "sheetId": "LEADS_SHEET_ID",
+            "rowId": "={{$json[\"ID\"]}}",
+            "values": {
+              "Status": "contacted"
+            }
+          }
+        },
+        {
+          "id": "wait_3_days",
+          "type": "Wait",
+          "description": "Wait 3 days before follow-up",
+          "parameters": {
+            "time": "3 days"
+          }
+        },
+        {
+          "id": "send_whatsapp_follow_up",
+          "type": "HTTP Request",
+          "description": "Send 3-day follow-up message",
+          "parameters": {
+            "url": "https://api.wati.io/v1/whatsapp/send",
+            "method": "POST",
+            "authentication": "Header Auth",
+            "headerParameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer {{WATI_API_KEY}}"
+              }
+            ],
+            "bodyParametersJson": {
+              "to": "={{$json[\"phone\"]}}",
+              "template_name": "follow_up",
+              "parameters": {
+                "1": "={{$json[\"name\"]}}"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "integrations": {
+    "google_sheets": {
+      "description": "CRM database for leads and conversations",
+      "credentials": {
+        "type": "OAuth2",
+        "clientId": "{{GOOGLE_SHEETS_CLIENT_ID}}",
+        "clientSecret": "{{GOOGLE_SHEETS_CLIENT_SECRET}}",
+        "refreshToken": "{{GOOGLE_SHEETS_REFRESH_TOKEN}}"
+      },
+      "sheets": {
+        "leads": "LEADS_SHEET_ID",
+        "customers": "CUSTOMERS_SHEET_ID",
+        "conversations": "CONVERSATIONS_SHEET_ID"
+      }
+    },
+    "whatsapp": {
+      "description": "WhatsApp Business messaging via WATI",
+      "provider": "WATI",
+      "credentials": {
+        "apiKey": "{{WATI_API_KEY}}",
+        "businessNumber": "{{WATI_BUSINESS_NUMBER}}"
+      }
+    },
+    "instagram": {
+      "description": "Instagram Graph API for DM handling",
+      "credentials": {
+        "accessToken": "{{INSTAGRAM_ACCESS_TOKEN}}",
+        "pageId": "{{INSTAGRAM_PAGE_ID}}"
+      }
+    },
+    "gemini_ai": {
+      "description": "Google Gemini API for AI message generation",
+      "credentials": {
+        "apiKey": "{{GEMINI_API_KEY}}"
+      }
+    }
+  },
+  "tone_and_voice_rules": {
+    "always_follow": [
+      "Always address the customer by first name",
+      "Use 1–2 relevant emojis — never overdo it",
+      "Keep messages under 100 words",
+      "Never use words like 'deal', 'cheap', 'discount' as the opening — lead with value or warmth",
+      "Always include one clear CTA (call to action) with a link or code",
+      "Sign off as: Team Adorn Silver",
+      "Replies to DMs must sound human, not robotic"
+    ],
+    "gemini_prompt_template": "You are the marketing assistant for Adorn Silver, a premium handcrafted silver jewellery brand in India. Your job: write warm, elegant, conversion-focused messages for Instagram DMs. Rules: - Always address the customer by first name - Tone: warm, aspirational, never pushy - Instagram messages: max 100 words, 1-2 emojis - Always include a CTA with a link or offer code - Sign off as: Team Adorn Silver"
+  }
+}

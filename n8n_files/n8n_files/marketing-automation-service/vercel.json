@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "name": "marketing-automation-service",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/pages/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "api/instagram-dm.js": {
+      "maxDuration": 30
+    },
+    "api/whatsapp-leads.js": {
+      "maxDuration": 30
+    },
+    "api/email-campaigns.js": {
+      "maxDuration": 60
+    },
+    "api/content-scheduler.js": {
+      "maxDuration": 30
+    }
+  }
+}
