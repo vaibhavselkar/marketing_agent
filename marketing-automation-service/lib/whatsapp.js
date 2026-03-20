@@ -11,7 +11,10 @@ class WhatsAppClient {
   constructor() {
     this.accountSid = process.env.TWILIO_ACCOUNT_SID;
     this.authToken = process.env.TWILIO_AUTH_TOKEN;
-    this.whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+    // Use admin's registered WhatsApp Business number as sender
+    this.whatsappNumber = process.env.BUSINESS_WHATSAPP_NUMBER || process.env.TWILIO_WHATSAPP_NUMBER;
+    // Admin's personal WhatsApp for lead/alert notifications
+    this.adminPhone = process.env.ADMIN_WHATSAPP_NUMBER;
     this.apiBaseUrl = `https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}`;
   }
 
@@ -234,6 +237,22 @@ class WhatsAppClient {
     } catch (error) {
       console.error('Re-engagement Message Error:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Notify admin on their personal WhatsApp when a new lead arrives
+   * @param {object} lead - Lead data { name, phone, source, interest }
+   * @returns {Promise<object|null>} Message response or null if admin number not set
+   */
+  async notifyAdminNewLead(lead) {
+    if (!this.adminPhone) return null;
+    try {
+      const message = `🔔 New Lead Alert!\n\nName: ${lead.name || 'Unknown'}\nPhone: ${lead.phone}\nEmail: ${lead.email || '-'}\nSource: ${lead.source || 'Unknown'}\nInterest: ${lead.interest || 'General'}\n\nReply on WhatsApp or check your dashboard.`;
+      return await this.sendMessage(this.adminPhone, message);
+    } catch (error) {
+      console.error('Admin notification error:', error.message);
+      return null;
     }
   }
 

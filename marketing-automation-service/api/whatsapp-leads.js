@@ -74,6 +74,9 @@ export async function POST(request) {
           );
         }
 
+        // Notify admin on their WhatsApp about the new lead
+        await whatsappClient.notifyAdminNewLead(lead);
+
         // Update lead status to contacted
         await sheetsClient.updateLeadStatus(lead.phone, 'contacted');
 
