@@ -1,13 +1,16 @@
 import axios from 'axios';
-import config from './config.js';
 
 /**
  * Google Gemini AI Client for Marketing Automation
  * Handles AI-powered message generation for Instagram DMs and other content
  */
 class GeminiClient {
-  constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY;
+  /**
+   * @param {object} cfg - Client config from MongoDB
+   */
+  constructor(cfg) {
+    this.cfg    = cfg;
+    this.apiKey = cfg.geminiApiKey;
     this.apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
   }
 
@@ -115,7 +118,7 @@ class GeminiClient {
    */
   buildInstagramPrompt(message, category, customerName) {
     const brandVoice = `
-You are a marketing assistant for ${config.name}, a ${config.tagline} based in ${config.country}.
+You are a marketing assistant for ${this.cfg.businessName}, a ${this.cfg.tagline} based in ${this.cfg.country}.
 Your job: write warm, conversion-focused responses for Instagram DMs.
 
 Brand Guidelines:
@@ -123,7 +126,7 @@ Brand Guidelines:
 - Tone: warm, aspirational, never pushy
 - Instagram messages: max 100 words, 1-2 emojis
 - Always include a clear CTA with a link or offer code
-- Sign off as: Team ${config.name}
+- Sign off as: Team ${this.cfg.businessName}
 - Responses must sound human, not robotic
 
 Message Category: ${category}
@@ -136,7 +139,7 @@ Generate a response that:
 2. Provides helpful information about the product/service
 3. Includes 1-2 relevant emojis (not excessive)
 4. Ends with a gentle CTA (link to collection, discount code, or contact info)
-5. Signs off as "Team ${config.name}"
+5. Signs off as "Team ${this.cfg.businessName}"
 
 Keep the response under 100 words and make it sound natural and helpful.`;
 
@@ -149,14 +152,14 @@ Keep the response under 100 words and make it sound natural and helpful.`;
    */
   buildEmailPrompt(purpose, context) {
     const brandVoice = `
-You are a marketing assistant for ${config.name}, a ${config.tagline} based in ${config.country}.
+You are a marketing assistant for ${this.cfg.businessName}, a ${this.cfg.tagline} based in ${this.cfg.country}.
 Your job: write engaging, professional email content.
 
 Brand Guidelines:
 - Warm and professional tone
 - Include relevant product/service information
 - Clear call-to-action
-- Sign off as: Team ${config.name}`;
+- Sign off as: Team ${this.cfg.businessName}`;
 
     const emailGuidelines = `
 Purpose: ${purpose}
@@ -174,7 +177,7 @@ Include appropriate subject line suggestions and body content.`;
    */
   buildCaptionPrompt(productDescription, platform) {
     const brandVoice = `
-You are a social media content creator for ${config.name}, a ${config.tagline} based in ${config.country}.
+You are a social media content creator for ${this.cfg.businessName}, a ${this.cfg.tagline} based in ${this.cfg.country}.
 Your job: create engaging social media captions.
 
 Brand Guidelines:

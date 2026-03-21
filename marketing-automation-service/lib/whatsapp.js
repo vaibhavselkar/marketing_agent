@@ -1,5 +1,4 @@
 import axios from 'axios';
-import config from './config.js';
 
 /**
  * WhatsApp Cloud API Client (Meta)
@@ -7,10 +6,14 @@ import config from './config.js';
  * Docs: https://developers.facebook.com/docs/whatsapp/cloud-api
  */
 class WhatsAppClient {
-  constructor() {
-    this.accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-    this.phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-    this.adminPhone = process.env.ADMIN_WHATSAPP_NUMBER;
+  /**
+   * @param {object} cfg - Client config from MongoDB (lib/models/Client.js)
+   */
+  constructor(cfg) {
+    this.accessToken   = cfg.whatsappAccessToken;
+    this.phoneNumberId = cfg.whatsappPhoneNumberId;
+    this.adminPhone    = cfg.adminWhatsappNumber;
+    this.cfg           = cfg;
     this.apiUrl = `https://graph.facebook.com/v19.0/${this.phoneNumberId}/messages`;
   }
 
@@ -103,8 +106,8 @@ class WhatsAppClient {
    * Send welcome message to new lead
    */
   async sendWelcomeMessage(phone, name) {
-    const discount = config.discountCode ? ` Here's ${config.discountPercent}% off your first order: ${config.discountCode}.` : '';
-    const message = `Hi ${name} ✨ Welcome to ${config.name}! ${config.tagline}.${discount} Browse our collection: ${config.website}\n\nTeam ${config.name}`;
+    const discount = this.cfg.discountCode ? ` Here's ${this.cfg.discountPercent}% off your first order: ${this.cfg.discountCode}.` : '';
+    const message = `Hi ${name} ✨ Welcome to ${this.cfg.businessName}! ${this.cfg.tagline}.${discount} Browse our collection: ${this.cfg.website}\n\nTeam ${this.cfg.businessName}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -112,7 +115,7 @@ class WhatsAppClient {
    * Send follow-up message
    */
   async sendFollowUpMessage(phone, name, link) {
-    const message = `Hi ${name}! Did you find something you loved? Here's what's trending: ${link}\n\nTeam ${config.name}`;
+    const message = `Hi ${name}! Did you find something you loved? Here's what's trending: ${link}\n\nTeam ${this.cfg.businessName}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -120,7 +123,7 @@ class WhatsAppClient {
    * Send order confirmation
    */
   async sendOrderConfirmation(phone, name, orderId, amount) {
-    const message = `Thank you for your order, ${name}! 🎉\n\nOrder ID: ${orderId}\nAmount: ${config.currency}${amount}\n\nWe'll notify you when your order ships. Thank you for choosing ${config.name}!\n\nTeam ${config.name}`;
+    const message = `Thank you for your order, ${name}! 🎉\n\nOrder ID: ${orderId}\nAmount: ${this.cfg.currency}${amount}\n\nWe'll notify you when your order ships. Thank you for choosing ${this.cfg.businessName}!\n\nTeam ${this.cfg.businessName}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -128,7 +131,7 @@ class WhatsAppClient {
    * Send care tips
    */
   async sendCareTips(phone, name, careLink) {
-    const message = `Hi ${name}, your ${config.name} ${config.productType} deserve the best care 🌿 Here's how: ${careLink}\n\nTeam ${config.name}`;
+    const message = `Hi ${name}, your ${this.cfg.businessName} ${this.cfg.productType} deserve the best care 🌿 Here's how: ${careLink}\n\nTeam ${this.cfg.businessName}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -136,7 +139,7 @@ class WhatsAppClient {
    * Send review request
    */
   async sendReviewRequest(phone, name, reviewLink) {
-    const message = `Hi ${name}, we hope you're loving your ${config.name} ${config.productType}! ✨ Could you share your experience? ${reviewLink}\n\nTeam ${config.name}`;
+    const message = `Hi ${name}, we hope you're loving your ${this.cfg.businessName} ${this.cfg.productType}! ✨ Could you share your experience? ${reviewLink}\n\nTeam ${this.cfg.businessName}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -144,7 +147,7 @@ class WhatsAppClient {
    * Send festival campaign message
    */
   async sendFestivalMessage(phone, name, festival, offer, link) {
-    const message = `Happy ${festival}, ${name}! 🎊✨ Special offer: ${offer}. Shop now: ${link}\n\nTeam ${config.name}`;
+    const message = `Happy ${festival}, ${name}! 🎊✨ Special offer: ${offer}. Shop now: ${link}\n\nTeam ${this.cfg.businessName}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -152,7 +155,7 @@ class WhatsAppClient {
    * Send re-engagement message
    */
   async sendReengagementMessage(phone, name, offer, link) {
-    const message = `We miss you, ${name}! 💫 Here's a special offer just for you: ${offer}. Come see what's new at ${config.name}: ${link}\n\nTeam ${config.name}`;
+    const message = `We miss you, ${name}! 💫 Here's a special offer just for you: ${offer}. Come see what's new at ${this.cfg.businessName}: ${link}\n\nTeam ${this.cfg.businessName}`;
     return await this.sendMessage(phone, message);
   }
 

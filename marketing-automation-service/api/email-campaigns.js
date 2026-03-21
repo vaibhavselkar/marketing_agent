@@ -1,24 +1,39 @@
 import { NextResponse } from 'next/server';
 import GoogleSheetsClient from '../../lib/google-sheets.js';
 import EmailClient from '../../lib/email.js';
-import config from '../../lib/config.js';
+import { getClientConfig } from '../../lib/config.js';
 import { log, getCurrentTimestamp, formatRelativeTime } from '../../lib/utils.js';
 
 /**
  * Email Campaigns API Route
  * Handles automated email sequences and campaign management
+ * Requires ?clientId=xxx in the URL
  */
 
 export async function POST(request) {
   try {
     log('Email campaigns processing triggered', 'info');
-    
+
+    const { searchParams } = new URL(request.url);
     const data = await request.json();
+    const clientId = searchParams.get('clientId') || data.clientId;
+
+    if (!clientId) {
+      return NextResponse.json({ success: false, error: 'clientId is required' }, { status: 400 });
+    }
+
+    let cfg;
+    try {
+      cfg = await getClientConfig(clientId);
+    } catch (e) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 404 });
+    }
+
     const { campaignType, testEmail } = data;
 
-    // Initialize clients
-    const sheetsClient = new GoogleSheetsClient();
-    const emailClient = new EmailClient();
+    // Initialize clients with this client's config
+    const sheetsClient = new GoogleSheetsClient(cfg);
+    const emailClient = new EmailClient(cfg);
 
     // Validate connections
     if (!(await sheetsClient.validateConnection())) {

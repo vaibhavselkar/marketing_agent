@@ -1,17 +1,35 @@
-/**
- * Business configuration loaded from environment variables.
- * Each client you onboard sets these in their Vercel project settings.
- */
-const config = {
-  name:            process.env.BUSINESS_NAME            || 'Your Business',
-  tagline:         process.env.BUSINESS_TAGLINE         || 'Quality products and services',
-  website:         process.env.BUSINESS_WEBSITE         || '#',
-  instagram:       process.env.BUSINESS_INSTAGRAM       || '',
-  productType:     process.env.BUSINESS_PRODUCT_TYPE    || 'products',
-  discountCode:    process.env.BUSINESS_DISCOUNT_CODE   || '',
-  discountPercent: process.env.BUSINESS_DISCOUNT_PERCENT || '10',
-  currency:        process.env.BUSINESS_CURRENCY        || '₹',
-  country:         process.env.BUSINESS_COUNTRY         || 'India',
-};
+import connectDB from './db.js';
+import Client from './models/Client.js';
 
-export default config;
+/**
+ * Fetch a client's full config from MongoDB by clientId.
+ * Falls back to env vars for single-tenant / local dev use.
+ *
+ * @param {string} clientId
+ * @returns {Promise<object>} client config object
+ */
+export async function getClientConfig(clientId) {
+  if (!clientId) throw new Error('clientId is required');
+
+  await connectDB();
+  const client = await Client.findOne({ clientId, isActive: true }).lean();
+  if (!client) throw new Error(`Client "${clientId}" not found or inactive`);
+
+  return client;
+}
+
+/**
+ * Validate that the request carries a valid apiKey for the given clientId.
+ * Pass apiKey via header: x-api-key or in the request body.
+ *
+ * @param {string} clientId
+ * @param {string} apiKey
+ * @returns {Promise<boolean>}
+ */
+export async function validateClientKey(clientId, apiKey) {
+  await connectDB();
+  const client = await Client.findOne({ clientId, apiKey, isActive: true }).lean();
+  return !!client;
+}
+
+export default { getClientConfig, validateClientKey };

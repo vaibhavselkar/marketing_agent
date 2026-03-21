@@ -1,20 +1,20 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-import config from './config.js';
-
-dotenv.config();
 
 /**
  * Email Client for Marketing Automation
  * Handles email sending via Gmail SMTP
  */
 class EmailClient {
-  constructor() {
+  /**
+   * @param {object} cfg - Client config from MongoDB
+   */
+  constructor(cfg) {
+    this.cfg = cfg;
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
+        user: cfg.gmailUser,
+        pass: cfg.gmailAppPassword
       }
     });
   }
@@ -30,9 +30,9 @@ class EmailClient {
       const htmlContent = this.buildWelcomeEmailHTML(name);
       
       const mailOptions = {
-        from: process.env.GMAIL_USER,
+        from: this.cfg.gmailUser,
         to: to,
-        subject: `Welcome to ${config.name}! 💎 Your Journey Starts Here`,
+        subject: `Welcome to ${this.cfg.businessName}! 💎 Your Journey Starts Here`,
         html: htmlContent
       };
 
@@ -61,7 +61,7 @@ class EmailClient {
       const htmlContent = this.buildFollowUpEmailHTML(name, link);
       
       const mailOptions = {
-        from: process.env.GMAIL_USER,
+        from: this.cfg.gmailUser,
         to: to,
         subject: `Hi ${name}, Discover What You Might Love ✨`,
         html: htmlContent
@@ -94,7 +94,7 @@ class EmailClient {
       const htmlContent = this.buildOrderConfirmationEmailHTML(name, orderId, amount, items);
       
       const mailOptions = {
-        from: process.env.GMAIL_USER,
+        from: this.cfg.gmailUser,
         to: to,
         subject: `Order Confirmed! 🎉 Order #${orderId}`,
         html: htmlContent
@@ -125,9 +125,9 @@ class EmailClient {
       const htmlContent = this.buildCareTipsEmailHTML(name, careLink);
       
       const mailOptions = {
-        from: process.env.GMAIL_USER,
+        from: this.cfg.gmailUser,
         to: to,
-        subject: `${name}, Keep Your ${config.name} ${config.productType} Shining ✨`,
+        subject: `${name}, Keep Your ${this.cfg.businessName} ${this.cfg.productType} Shining ✨`,
         html: htmlContent
       };
 
@@ -156,9 +156,9 @@ class EmailClient {
       const htmlContent = this.buildReviewRequestEmailHTML(name, reviewLink);
       
       const mailOptions = {
-        from: process.env.GMAIL_USER,
+        from: this.cfg.gmailUser,
         to: to,
-        subject: `Share Your ${config.name} Experience, ${name}! ✨`,
+        subject: `Share Your ${this.cfg.businessName} Experience, ${name}! ✨`,
         html: htmlContent
       };
 
@@ -189,7 +189,7 @@ class EmailClient {
       const htmlContent = this.buildFestivalEmailHTML(name, festival, offer, link);
       
       const mailOptions = {
-        from: process.env.GMAIL_USER,
+        from: this.cfg.gmailUser,
         to: to,
         subject: `Happy ${festival}, ${name}! ✨ Special Silver Surprises Inside`,
         html: htmlContent
@@ -221,7 +221,7 @@ class EmailClient {
       const htmlContent = this.buildReengagementEmailHTML(name, offer, link);
       
       const mailOptions = {
-        from: process.env.GMAIL_USER,
+        from: this.cfg.gmailUser,
         to: to,
         subject: `We Miss You, ${name}! 💫 Special Offer Just for You`,
         html: htmlContent
@@ -251,7 +251,7 @@ class EmailClient {
       const htmlContent = this.buildWeeklyReportEmailHTML(analytics);
       
       const mailOptions = {
-        from: process.env.GMAIL_USER,
+        from: this.cfg.gmailUser,
         to: to,
         subject: 'Weekly Marketing Analytics Report 📊',
         html: htmlContent
@@ -281,7 +281,7 @@ class EmailClient {
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Welcome to ${config.name}</title>
+        <title>Welcome to ${this.cfg.businessName}</title>
         <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -297,18 +297,18 @@ class EmailClient {
     <body>
         <div class="container">
             <div class="header">
-                <h1>✨ Welcome to ${config.name}!</h1>
+                <h1>✨ Welcome to ${this.cfg.businessName}!</h1>
             </div>
             <div class="content">
                 <p>Hi ${name},</p>
                 <p>We're thrilled to have you join our community of silver jewellery lovers! 🎉</p>
                 
                 <div class="highlight">
-                    <p class="offer">🎉 Special Welcome Offer: <strong>${config.discountCode || 'WELCOME10'}</strong></p>
-                    <p>Enjoy ${config.discountPercent}% off your first order with us. This exclusive offer is our way of saying thank you for choosing ${config.name}.</p>
+                    <p class="offer">🎉 Special Welcome Offer: <strong>${this.cfg.discountCode || 'WELCOME10'}</strong></p>
+                    <p>Enjoy ${this.cfg.discountPercent}% off your first order with us. This exclusive offer is our way of saying thank you for choosing ${this.cfg.businessName}.</p>
                 </div>
 
-                <p><strong>What makes ${config.name} special?</strong></p>
+                <p><strong>What makes ${this.cfg.businessName} special?</strong></p>
                 <ul>
                     <li>✨ Handcrafted 925 silver jewellery</li>
                     <li>💎 Premium quality, timeless designs</li>
@@ -316,13 +316,13 @@ class EmailClient {
                     <li>🌟 Exceptional customer service</li>
                 </ul>
 
-                <a href="${config.website}" class="cta-button">Explore Our Collection</a>
+                <a href="${this.cfg.website}" class="cta-button">Explore Our Collection</a>
 
-                ${config.instagram ? `<p>Follow us on Instagram <a href="https://instagram.com/${config.instagram.replace('@','')}">@${config.instagram.replace('@','')}</a> for daily inspiration and exclusive offers!</p>` : ''}
+                ${this.cfg.instagram ? `<p>Follow us on Instagram <a href="https://instagram.com/${this.cfg.instagram.replace('@','')}">@${this.cfg.instagram.replace('@','')}</a> for daily inspiration and exclusive offers!</p>` : ''}
             </div>
             <div class="footer">
-                <p>Team ${config.name}</p>
-                <p>${config.tagline} ✨</p>
+                <p>Team ${this.cfg.businessName}</p>
+                <p>${this.cfg.tagline} ✨</p>
             </div>
         </div>
     </body>
@@ -418,10 +418,10 @@ class EmailClient {
                     <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
                 </div>
 
-                <p>We'll notify you when your order ships. Thank you for choosing ${config.name}!</p>
+                <p>We'll notify you when your order ships. Thank you for choosing ${this.cfg.businessName}!</p>
             </div>
             <div class="footer">
-                <p>Team ${config.name}</p>
+                <p>Team ${this.cfg.businessName}</p>
                 <p>Questions? Reply to this email - we're here for you! ✨</p>
             </div>
         </div>
@@ -454,7 +454,7 @@ class EmailClient {
     <body>
         <div class="container">
             <div class="header">
-                <h2>🌿 Care Tips for Your ${config.name} ${config.productType}</h2>
+                <h2>🌿 Care Tips for Your ${this.cfg.businessName} ${this.cfg.productType}</h2>
                 <p>Keep your jewellery shining, ${name}!</p>
             </div>
             <div class="content">
@@ -470,7 +470,7 @@ class EmailClient {
 
                 <a href="${careLink}" class="cta-button">Read Complete Care Guide</a>
 
-                <p>Your ${config.name} ${config.productType} are designed to last. With proper care, they will continue to shine for years to come! ✨</p>
+                <p>Your ${this.cfg.businessName} ${this.cfg.productType} are designed to last. With proper care, they will continue to shine for years to come! ✨</p>
             </div>
         </div>
     </body>
@@ -502,11 +502,11 @@ class EmailClient {
     <body>
         <div class="container">
             <div class="header">
-                <h2>✨ Share Your ${config.name} Experience</h2>
+                <h2>✨ Share Your ${this.cfg.businessName} Experience</h2>
                 <p>We'd love to hear from you, ${name}!</p>
             </div>
             <div class="content">
-                <p>How are you enjoying your ${config.name} ${config.productType}? Your feedback helps us serve you better and helps other customers make informed choices.</p>
+                <p>How are you enjoying your ${this.cfg.businessName} ${this.cfg.productType}? Your feedback helps us serve you better and helps other customers make informed choices.</p>
 
                 <div class="review-box">
                     <h3>🌟 Your opinion matters!</h3>
@@ -599,7 +599,7 @@ class EmailClient {
                     <p>Just for you - because you're special to us!</p>
                 </div>
 
-                <a href="${link}" class="cta-button">Rediscover ${config.name}</a>
+                <a href="${link}" class="cta-button">Rediscover ${this.cfg.businessName}</a>
 
                 <p>We've added some beautiful new pieces that we think you'll love. Come see what's new! ✨</p>
             </div>
@@ -669,7 +669,7 @@ class EmailClient {
                 <p><strong>Recommendation:</strong> Focus on high-converting sources and popular product categories for next week's campaigns.</p>
             </div>
             <div class="footer">
-                <p>Generated by ${config.name} Marketing Automation</p>
+                <p>Generated by ${this.cfg.businessName} Marketing Automation</p>
                 <p>Report Date: ${new Date().toLocaleDateString()}</p>
             </div>
         </div>

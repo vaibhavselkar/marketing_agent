@@ -1,20 +1,34 @@
 import { NextResponse } from 'next/server';
 import GeminiClient from '../../lib/gemini.js';
 import GoogleSheetsClient from '../../lib/google-sheets.js';
-import { log, formatPhoneNumber, validateEmail } from '../../lib/utils.js';
+import { getClientConfig } from '../../lib/config.js';
+import { log } from '../../lib/utils.js';
 
 /**
  * Instagram DM Auto-Reply API Route
  * Handles Instagram webhook for new messages and generates AI responses
+ * Requires ?clientId=xxx in the URL
  */
 
 export async function POST(request) {
   try {
     log('Instagram DM webhook triggered', 'info');
-    
-    // Parse request body
+
+    const { searchParams } = new URL(request.url);
+    const clientId = searchParams.get('clientId');
+    if (!clientId) {
+      return NextResponse.json({ success: false, error: 'clientId is required' }, { status: 400 });
+    }
+
+    let cfg;
+    try {
+      cfg = await getClientConfig(clientId);
+    } catch (e) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 404 });
+    }
+
     const data = await request.json();
-    log(`Received Instagram data: ${JSON.stringify(data)}`, 'info');
+    log(`Received Instagram data for ${cfg.businessName}: ${JSON.stringify(data)}`, 'info');
 
     // Extract message data from webhook
     const entry = data.entry?.[0];
@@ -55,9 +69,9 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // Initialize clients
-    const geminiClient = new GeminiClient();
-    const sheetsClient = new GoogleSheetsClient();
+    // Initialize clients with this client's config
+    const geminiClient = new GeminiClient(cfg);
+    const sheetsClient = new GoogleSheetsClient(cfg);
 
     // Validate API keys
     if (!geminiClient.validateApiKey()) {
@@ -88,7 +102,7 @@ export async function POST(request) {
     log(`Generated response: ${responseText}`, 'info');
 
     // Send response via Instagram API
-    const instagramResponse = await sendInstagramReply(senderId, responseText);
+    const instagramResponse = await sendInstagramReply(senderId, responseText, cfg);
 
     // Log conversation to Google Sheets
     await sheetsClient.logConversation(
@@ -149,13 +163,13 @@ function detectMessageCategory(message) {
  * @param {string} responseText - Response text
  * @returns {Promise<object>} Instagram API response
  */
-async function sendInstagramReply(senderId, responseText) {
+async function sendInstagramReply(senderId, responseText, cfg) {
   try {
-    const response = await fetch(`https://graph.facebook.com/v19.0/${process.env.INSTAGRAM_PAGE_ID}/messages`, {
+    const response = await fetch(`https://graph.facebook.com/v19.0/${cfg.instagramPageId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.INSTAGRAM_ACCESS_TOKEN}`
+        'Authorization': `Bearer ${cfg.instagramAccessToken}`
       },
       body: JSON.stringify({
         recipient: {
@@ -188,8 +202,14 @@ export async function GET(request) {
     const token = url.searchParams.get('hub.verify_token');
     const challenge = url.searchParams.get('hub.challenge');
 
+    const clientId = url.searchParams.get('clientId');
+    let verifyToken = process.env.INSTAGRAM_VERIFY_TOKEN;
+    if (clientId) {
+      try { const cfg = await getClientConfig(clientId); verifyToken = cfg.instagramVerifyToken; } catch (_) {}
+    }
+
     // Verify token matches
-    if (mode === 'subscribe' && token === process.env.INSTAGRAM_VERIFY_TOKEN) {
+    if (mode === 'subscribe' && token === verifyToken) {
       return NextResponse.json(challenge, {
         headers: {
           'Content-Type': 'text/plain'

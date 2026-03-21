@@ -2,25 +2,42 @@ import { NextResponse } from 'next/server';
 import GoogleSheetsClient from '../../lib/google-sheets.js';
 import WhatsAppClient from '../../lib/whatsapp.js';
 import EmailClient from '../../lib/email.js';
+import { getClientConfig } from '../../lib/config.js';
 import { log, formatPhoneNumber, validateEmail } from '../../lib/utils.js';
 
 /**
  * WhatsApp Lead Capture API Route
  * Handles lead processing from Google Sheets and sends automated messages
+ * Requires ?clientId=xxx in the URL
  */
 
 export async function POST(request) {
   try {
     log('WhatsApp leads processing triggered', 'info');
-    
-    // Parse request body
-    const data = await request.json();
-    log(`Received lead data: ${JSON.stringify(data)}`, 'info');
 
-    // Initialize clients
-    const sheetsClient = new GoogleSheetsClient();
-    const whatsappClient = new WhatsAppClient();
-    const emailClient = new EmailClient();
+    // Resolve clientId from URL params or request body
+    const { searchParams } = new URL(request.url);
+    const data = await request.json();
+    const clientId = searchParams.get('clientId') || data.clientId;
+
+    if (!clientId) {
+      return NextResponse.json({ success: false, error: 'clientId is required' }, { status: 400 });
+    }
+
+    // Load this client's config from MongoDB
+    let cfg;
+    try {
+      cfg = await getClientConfig(clientId);
+    } catch (e) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 404 });
+    }
+
+    log(`Processing leads for client: ${cfg.businessName}`, 'info');
+
+    // Initialize clients with this client's config
+    const sheetsClient = new GoogleSheetsClient(cfg);
+    const whatsappClient = new WhatsAppClient(cfg);
+    const emailClient = new EmailClient(cfg);
 
     // Validate connections
     if (!(await sheetsClient.validateConnection())) {
