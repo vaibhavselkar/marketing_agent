@@ -155,3 +155,10 @@ export default function Home() {
     </Box>
   );
 }
+export async function getServerSideProps(ctx) {
+  const { getSession } = await import('next-auth/react');
+  const session = await getSession(ctx);
+  if (!session) return { redirect: { destination: '/auth/login', permanent: false } };
+  if (!session.user.clientId) return { redirect: { destination: '/onboarding', permanent: false } };
+  return { redirect: { destination: '/dashboard', permanent: false } };
+}
