@@ -458,3 +458,6 @@ export default function Dashboard() {
     </Box>
   );
 }
+export async function getServerSideProps() {
+  return { props: {} };
+}
