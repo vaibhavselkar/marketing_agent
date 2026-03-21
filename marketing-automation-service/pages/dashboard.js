@@ -64,8 +64,16 @@ export default function Dashboard() {
     if (!cid) return;
     try {
       setLoading(true);
-      const response = await fetch(`/api/email-campaigns?clientId=${cid}`);
-      const data = await response.json();
+      const [campaignRes, waRes] = await Promise.all([
+        fetch(`/api/email-campaigns?clientId=${cid}`),
+        fetch(`/api/whatsapp-leads?clientId=${cid}`)
+      ]);
+      const campaignData = await campaignRes.json();
+      const waData       = await waRes.json();
+      const data = {
+        ...campaignData,
+        data: { ...campaignData.data, whatsappUsage: waData.data?.whatsappUsage }
+      };
       
       if (data.success) {
         setAnalytics(data.data);
@@ -294,16 +302,19 @@ export default function Dashboard() {
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
                     <Typography color="textSecondary" gutterBottom variant="h6">
-                      Email Campaigns
+                      WhatsApp Usage
                     </Typography>
                     <Typography variant="h4" component="h2">
-                      Active
+                      {analytics?.whatsappUsage?.used || 0}
+                      <Typography component="span" variant="h6" color="textSecondary">
+                        /{analytics?.whatsappUsage?.limit || 1000}
+                      </Typography>
                     </Typography>
                   </Box>
-                  <EmailIcon sx={{ fontSize: 40, color: 'secondary.main' }} />
+                  <EmailIcon sx={{ fontSize: 40, color: analytics?.whatsappUsage?.remaining === 0 ? 'error.main' : 'secondary.main' }} />
                 </Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                  Running campaigns
+                <Typography variant="body2" color={analytics?.whatsappUsage?.remaining === 0 ? 'error' : 'textSecondary'} sx={{ mt: 1 }}>
+                  {analytics?.whatsappUsage?.remaining === 0 ? 'Limit reached this month' : `${analytics?.whatsappUsage?.remaining || 1000} remaining this month`}
                 </Typography>
               </CardContent>
             </Card>

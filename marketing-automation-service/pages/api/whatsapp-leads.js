@@ -3,6 +3,8 @@ import WhatsAppClient from '../../lib/whatsapp.js';
 import EmailClient from '../../lib/email.js';
 import { getClientConfig } from '../../lib/config.js';
 import { log, formatPhoneNumber, validateEmail } from '../../lib/utils.js';
+import connectDB from '../../lib/db.js';
+import Client from '../../lib/models/Client.js';
 
 export default async function handler(req, res) {
   const clientId = req.query.clientId || req.body?.clientId;
@@ -16,14 +18,28 @@ export default async function handler(req, res) {
     return res.status(404).json({ success: false, error: e.message });
   }
 
-  // GET — lead statistics
+  // GET — lead statistics + WhatsApp usage
   if (req.method === 'GET') {
     try {
+      await connectDB();
+      const clientDoc = await Client.findOne({ clientId }).lean();
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const usedThisMonth = clientDoc?.messageCountMonth === currentMonth
+        ? (clientDoc?.monthlyMessageCount || 0)
+        : 0;
+      const limit = clientDoc?.monthlyMessageLimit || 1000;
+
       const sheetsClient = new GoogleSheetsClient(cfg);
       if (!(await sheetsClient.validateConnection()))
         return res.status(500).json({ success: false, error: 'Google Sheets not configured' });
       const analytics = await sheetsClient.getAnalytics();
-      return res.status(200).json({ success: true, data: analytics });
+      return res.status(200).json({
+        success: true,
+        data: {
+          ...analytics,
+          whatsappUsage: { used: usedThisMonth, limit, remaining: limit - usedThisMonth }
+        }
+      });
     } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
     }

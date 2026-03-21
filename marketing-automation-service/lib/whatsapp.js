@@ -1,4 +1,6 @@
 import axios from 'axios';
+import connectDB from './db.js';
+import Client from './models/Client.js';
 
 /**
  * WhatsApp Client using AiSensy API
@@ -14,13 +16,46 @@ class WhatsAppClient {
   }
 
   /**
+   * Check monthly limit and increment counter atomically.
+   * Resets counter if we're in a new month.
+   * @returns {Promise<{allowed: boolean, used: number, limit: number}>}
+   */
+  async checkAndIncrementUsage() {
+    await connectDB();
+    const currentMonth = new Date().toISOString().slice(0, 7); // "2026-03"
+
+    // If month changed, reset counter first
+    await Client.updateOne(
+      { clientId: this.cfg.clientId, messageCountMonth: { $ne: currentMonth } },
+      { $set: { monthlyMessageCount: 0, messageCountMonth: currentMonth } }
+    );
+
+    // Fetch fresh doc to check limit
+    const client = await Client.findOne({ clientId: this.cfg.clientId }).lean();
+    if (!client) return { allowed: false, used: 0, limit: 1000 };
+
+    const limit = client.monthlyMessageLimit || 1000;
+    const used  = client.monthlyMessageCount || 0;
+
+    if (used >= limit) return { allowed: false, used, limit };
+
+    // Increment counter
+    await Client.updateOne({ clientId: this.cfg.clientId }, { $inc: { monthlyMessageCount: 1 } });
+    return { allowed: true, used: used + 1, limit };
+  }
+
+  /**
    * Core send — calls AiSensy campaign API
-   * @param {string} phone - recipient number
-   * @param {string} campaignName - campaign created in AiSensy dashboard
-   * @param {string} name - recipient name (shown in template)
-   * @param {Array}  templateParams - template variable values
    */
   async sendCampaign(phone, campaignName, name = 'Customer', templateParams = []) {
+    // Check monthly limit before sending
+    if (this.cfg.clientId) {
+      const usage = await this.checkAndIncrementUsage();
+      if (!usage.allowed) {
+        throw new Error(`Monthly WhatsApp limit reached (${usage.limit} messages). Used: ${usage.used}/${usage.limit}`);
+      }
+    }
+
     try {
       const response = await axios.post(this.apiUrl, {
         apiKey:         this.apiKey,

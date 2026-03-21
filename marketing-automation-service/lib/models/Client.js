@@ -51,6 +51,11 @@ const ClientSchema = new mongoose.Schema({
   ownerEmail: { type: String, default: '' },
   ownerPhone: { type: String, default: '' },
 
+  // ── Usage / Limits ────────────────────────────────────────────────
+  monthlyMessageLimit: { type: Number, default: 1000 },
+  monthlyMessageCount: { type: Number, default: 0 },
+  messageCountMonth:   { type: String, default: '' }, // format: "2026-03"
+
   // ── Status ────────────────────────────────────────────────────────
   isActive:  { type: Boolean, default: true },
   plan:      { type: String, enum: ['basic', 'standard', 'premium'], default: 'basic' },
