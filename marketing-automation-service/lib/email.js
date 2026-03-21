@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import config from './config.js';
 
 dotenv.config();
 
@@ -9,7 +10,7 @@ dotenv.config();
  */
 class EmailClient {
   constructor() {
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER,
@@ -31,7 +32,7 @@ class EmailClient {
       const mailOptions = {
         from: process.env.GMAIL_USER,
         to: to,
-        subject: 'Welcome to Adorn Silver! 💎 Your Journey Starts Here',
+        subject: `Welcome to ${config.name}! 💎 Your Journey Starts Here`,
         html: htmlContent
       };
 
@@ -126,7 +127,7 @@ class EmailClient {
       const mailOptions = {
         from: process.env.GMAIL_USER,
         to: to,
-        subject: `${name}, Keep Your Adorn Silver Shining ✨`,
+        subject: `${name}, Keep Your ${config.name} ${config.productType} Shining ✨`,
         html: htmlContent
       };
 
@@ -157,7 +158,7 @@ class EmailClient {
       const mailOptions = {
         from: process.env.GMAIL_USER,
         to: to,
-        subject: `Share Your Adorn Silver Experience, ${name}! ✨`,
+        subject: `Share Your ${config.name} Experience, ${name}! ✨`,
         html: htmlContent
       };
 
@@ -280,7 +281,7 @@ class EmailClient {
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Welcome to Adorn Silver</title>
+        <title>Welcome to ${config.name}</title>
         <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -296,18 +297,18 @@ class EmailClient {
     <body>
         <div class="container">
             <div class="header">
-                <h1>✨ Welcome to Adorn Silver!</h1>
+                <h1>✨ Welcome to ${config.name}!</h1>
             </div>
             <div class="content">
                 <p>Hi ${name},</p>
                 <p>We're thrilled to have you join our community of silver jewellery lovers! 🎉</p>
                 
                 <div class="highlight">
-                    <p class="offer">🎉 Special Welcome Offer: <strong>ADORN10</strong></p>
-                    <p>Enjoy 10% off your first order with us. This exclusive offer is our way of saying thank you for choosing Adorn Silver.</p>
+                    <p class="offer">🎉 Special Welcome Offer: <strong>${config.discountCode || 'WELCOME10'}</strong></p>
+                    <p>Enjoy ${config.discountPercent}% off your first order with us. This exclusive offer is our way of saying thank you for choosing ${config.name}.</p>
                 </div>
 
-                <p><strong>What makes Adorn Silver special?</strong></p>
+                <p><strong>What makes ${config.name} special?</strong></p>
                 <ul>
                     <li>✨ Handcrafted 925 silver jewellery</li>
                     <li>💎 Premium quality, timeless designs</li>
@@ -315,13 +316,13 @@ class EmailClient {
                     <li>🌟 Exceptional customer service</li>
                 </ul>
 
-                <a href="https://adornsilver.com" class="cta-button">Explore Our Collection</a>
+                <a href="${config.website}" class="cta-button">Explore Our Collection</a>
 
-                <p>Follow us on Instagram <a href="https://instagram.com/adornsilver">@adornsilver</a> for daily inspiration, styling tips, and exclusive offers!</p>
+                ${config.instagram ? `<p>Follow us on Instagram <a href="https://instagram.com/${config.instagram.replace('@','')}">@${config.instagram.replace('@','')}</a> for daily inspiration and exclusive offers!</p>` : ''}
             </div>
             <div class="footer">
-                <p>Team Adorn Silver</p>
-                <p>Handcrafting memories, one piece at a time ✨</p>
+                <p>Team ${config.name}</p>
+                <p>${config.tagline} ✨</p>
             </div>
         </div>
     </body>
@@ -417,10 +418,10 @@ class EmailClient {
                     <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
                 </div>
 
-                <p>We'll notify you when your order ships. In the meantime, follow us on Instagram <a href="https://instagram.com/adornsilver">@adornsilver</a> for care tips and styling inspiration!</p>
+                <p>We'll notify you when your order ships. Thank you for choosing ${config.name}!</p>
             </div>
             <div class="footer">
-                <p>Team Adorn Silver</p>
+                <p>Team ${config.name}</p>
                 <p>Questions? Reply to this email - we're here for you! ✨</p>
             </div>
         </div>
@@ -453,7 +454,7 @@ class EmailClient {
     <body>
         <div class="container">
             <div class="header">
-                <h2>🌿 Care Tips for Your Adorn Silver</h2>
+                <h2>🌿 Care Tips for Your ${config.name} ${config.productType}</h2>
                 <p>Keep your jewellery shining, ${name}!</p>
             </div>
             <div class="content">
@@ -469,7 +470,7 @@ class EmailClient {
 
                 <a href="${careLink}" class="cta-button">Read Complete Care Guide</a>
 
-                <p>Your Adorn Silver piece is designed to last. With proper care, it will continue to shine for years to come! ✨</p>
+                <p>Your ${config.name} ${config.productType} are designed to last. With proper care, they will continue to shine for years to come! ✨</p>
             </div>
         </div>
     </body>
@@ -501,11 +502,11 @@ class EmailClient {
     <body>
         <div class="container">
             <div class="header">
-                <h2>✨ Share Your Adorn Silver Experience</h2>
+                <h2>✨ Share Your ${config.name} Experience</h2>
                 <p>We'd love to hear from you, ${name}!</p>
             </div>
             <div class="content">
-                <p>How are you enjoying your Adorn Silver jewellery? Your feedback helps us serve you better and helps other customers make informed choices.</p>
+                <p>How are you enjoying your ${config.name} ${config.productType}? Your feedback helps us serve you better and helps other customers make informed choices.</p>
 
                 <div class="review-box">
                     <h3>🌟 Your opinion matters!</h3>
@@ -598,7 +599,7 @@ class EmailClient {
                     <p>Just for you - because you're special to us!</p>
                 </div>
 
-                <a href="${link}" class="cta-button">Rediscover Adorn Silver</a>
+                <a href="${link}" class="cta-button">Rediscover ${config.name}</a>
 
                 <p>We've added some beautiful new pieces that we think you'll love. Come see what's new! ✨</p>
             </div>
@@ -668,7 +669,7 @@ class EmailClient {
                 <p><strong>Recommendation:</strong> Focus on high-converting sources and popular product categories for next week's campaigns.</p>
             </div>
             <div class="footer">
-                <p>Generated by Adorn Silver Marketing Automation</p>
+                <p>Generated by ${config.name} Marketing Automation</p>
                 <p>Report Date: ${new Date().toLocaleDateString()}</p>
             </div>
         </div>

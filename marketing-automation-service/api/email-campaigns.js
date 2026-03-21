@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import GoogleSheetsClient from '../../lib/google-sheets.js';
 import EmailClient from '../../lib/email.js';
+import config from '../../lib/config.js';
 import { log, getCurrentTimestamp, formatRelativeTime } from '../../lib/utils.js';
 
 /**
@@ -149,7 +150,7 @@ async function processFollowUpCampaign(sheetsClient, emailClient) {
     for (const lead of leads) {
       if (lead.email && lead.status === 'welcome_sent') {
         try {
-          const followUpLink = 'https://adornsilver.com/trending';
+          const followUpLink = `${config.website}/trending`;
           
           const result = await emailClient.sendFollowUpEmail(
             lead.email,
@@ -268,7 +269,7 @@ async function processReengagementCampaign(sheetsClient, emailClient) {
         if (lastContactDate < cutoffDate) {
           try {
             const offer = '20% OFF + Free Shipping';
-            const link = 'https://adornsilver.com/new-arrivals';
+            const link = `${config.website}/new-arrivals`;
             
             const result = await emailClient.sendReengagementEmail(
               lead.email,
@@ -327,7 +328,7 @@ async function processReviewRequestCampaign(sheetsClient, emailClient) {
         // Send review request 7 days after last contact
         if (daysSinceContact >= 7 && daysSinceContact <= 14) {
           try {
-            const reviewLink = 'https://adornsilver.com/reviews';
+            const reviewLink = `${config.website}/reviews`;
             
             const result = await emailClient.sendReviewRequestEmail(
               lead.email,

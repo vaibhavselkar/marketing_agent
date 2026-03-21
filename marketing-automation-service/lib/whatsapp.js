@@ -1,4 +1,5 @@
 import axios from 'axios';
+import config from './config.js';
 
 /**
  * WhatsApp Cloud API Client (Meta)
@@ -102,7 +103,8 @@ class WhatsAppClient {
    * Send welcome message to new lead
    */
   async sendWelcomeMessage(phone, name) {
-    const message = `Hi ${name} ✨ Welcome to Adorn Silver! We handcraft premium 925 silver jewellery for women who love elegant, meaningful pieces. Here's 10% off your first order: ADORN10. Browse our collection: https://adornsilver.com\n\nTeam Adorn Silver`;
+    const discount = config.discountCode ? ` Here's ${config.discountPercent}% off your first order: ${config.discountCode}.` : '';
+    const message = `Hi ${name} ✨ Welcome to ${config.name}! ${config.tagline}.${discount} Browse our collection: ${config.website}\n\nTeam ${config.name}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -110,7 +112,7 @@ class WhatsAppClient {
    * Send follow-up message
    */
   async sendFollowUpMessage(phone, name, link) {
-    const message = `Hi ${name}! Did you find something you loved? Here's what's trending: ${link}\n\nTeam Adorn Silver`;
+    const message = `Hi ${name}! Did you find something you loved? Here's what's trending: ${link}\n\nTeam ${config.name}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -118,7 +120,7 @@ class WhatsAppClient {
    * Send order confirmation
    */
   async sendOrderConfirmation(phone, name, orderId, amount) {
-    const message = `Thank you for your order, ${name}! 🎉\n\nOrder ID: ${orderId}\nAmount: ₹${amount}\n\nWe'll notify you when your order ships. Thank you for choosing Adorn Silver!\n\nTeam Adorn Silver`;
+    const message = `Thank you for your order, ${name}! 🎉\n\nOrder ID: ${orderId}\nAmount: ${config.currency}${amount}\n\nWe'll notify you when your order ships. Thank you for choosing ${config.name}!\n\nTeam ${config.name}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -126,7 +128,7 @@ class WhatsAppClient {
    * Send care tips
    */
   async sendCareTips(phone, name, careLink) {
-    const message = `Hi ${name}, your Adorn Silver piece deserves the best care 🌿 Here's how to keep it shining: ${careLink}\n\nTeam Adorn Silver`;
+    const message = `Hi ${name}, your ${config.name} ${config.productType} deserve the best care 🌿 Here's how: ${careLink}\n\nTeam ${config.name}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -134,7 +136,7 @@ class WhatsAppClient {
    * Send review request
    */
   async sendReviewRequest(phone, name, reviewLink) {
-    const message = `Hi ${name}, we hope you're loving your Adorn Silver jewellery! ✨ Could you share your experience? Your feedback helps us serve you better: ${reviewLink}\n\nTeam Adorn Silver`;
+    const message = `Hi ${name}, we hope you're loving your ${config.name} ${config.productType}! ✨ Could you share your experience? ${reviewLink}\n\nTeam ${config.name}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -142,7 +144,7 @@ class WhatsAppClient {
    * Send festival campaign message
    */
   async sendFestivalMessage(phone, name, festival, offer, link) {
-    const message = `Happy ${festival}, ${name}! 🎊✨ This festive season, adorn yourself and your loved ones with our handcrafted silver collection. Special offer: ${offer}. Shop now: ${link}\n\nTeam Adorn Silver`;
+    const message = `Happy ${festival}, ${name}! 🎊✨ Special offer: ${offer}. Shop now: ${link}\n\nTeam ${config.name}`;
     return await this.sendMessage(phone, message);
   }
 
@@ -150,7 +152,7 @@ class WhatsAppClient {
    * Send re-engagement message
    */
   async sendReengagementMessage(phone, name, offer, link) {
-    const message = `We miss you, ${name}! 💫 Here's a special offer just for you: ${offer}. Come see what's new at Adorn Silver: ${link}\n\nTeam Adorn Silver`;
+    const message = `We miss you, ${name}! 💫 Here's a special offer just for you: ${offer}. Come see what's new at ${config.name}: ${link}\n\nTeam ${config.name}`;
     return await this.sendMessage(phone, message);
   }
 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import config from './config.js';
 
 /**
  * Google Gemini AI Client for Marketing Automation
@@ -114,15 +115,15 @@ class GeminiClient {
    */
   buildInstagramPrompt(message, category, customerName) {
     const brandVoice = `
-You are a marketing assistant for Adorn Silver, a premium handcrafted silver jewellery brand in India.
-Your job: write warm, elegant, conversion-focused responses for Instagram DMs.
+You are a marketing assistant for ${config.name}, a ${config.tagline} based in ${config.country}.
+Your job: write warm, conversion-focused responses for Instagram DMs.
 
 Brand Guidelines:
 - Always address the customer by first name when provided
 - Tone: warm, aspirational, never pushy
 - Instagram messages: max 100 words, 1-2 emojis
 - Always include a clear CTA with a link or offer code
-- Sign off as: Team Adorn Silver
+- Sign off as: Team ${config.name}
 - Responses must sound human, not robotic
 
 Message Category: ${category}
@@ -135,7 +136,7 @@ Generate a response that:
 2. Provides helpful information about the product/service
 3. Includes 1-2 relevant emojis (not excessive)
 4. Ends with a gentle CTA (link to collection, discount code, or contact info)
-5. Signs off as "Team Adorn Silver"
+5. Signs off as "Team ${config.name}"
 
 Keep the response under 100 words and make it sound natural and helpful.`;
 
@@ -148,15 +149,14 @@ Keep the response under 100 words and make it sound natural and helpful.`;
    */
   buildEmailPrompt(purpose, context) {
     const brandVoice = `
-You are a marketing assistant for Adorn Silver, a premium handcrafted silver jewellery brand in India.
+You are a marketing assistant for ${config.name}, a ${config.tagline} based in ${config.country}.
 Your job: write engaging, professional email content.
 
 Brand Guidelines:
-- Warm and elegant tone
-- Professional yet approachable
-- Include relevant product information
+- Warm and professional tone
+- Include relevant product/service information
 - Clear call-to-action
-- Brand consistent messaging`;
+- Sign off as: Team ${config.name}`;
 
     const emailGuidelines = `
 Purpose: ${purpose}
@@ -174,7 +174,7 @@ Include appropriate subject line suggestions and body content.`;
    */
   buildCaptionPrompt(productDescription, platform) {
     const brandVoice = `
-You are a social media content creator for Adorn Silver, a premium handcrafted silver jewellery brand in India.
+You are a social media content creator for ${config.name}, a ${config.tagline} based in ${config.country}.
 Your job: create engaging social media captions.
 
 Brand Guidelines:
