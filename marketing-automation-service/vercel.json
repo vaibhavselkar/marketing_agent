@@ -1,13 +1,4 @@
 {
   "version": 2,
-  "name": "marketing-automation-service",
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "pages/api/instagram-dm.js":   { "maxDuration": 30 },
-    "pages/api/whatsapp-leads.js": { "maxDuration": 30 },
-    "pages/api/email-campaigns.js":{ "maxDuration": 60 },
-    "pages/api/clients.js":        { "maxDuration": 30 }
-  }
+  "name": "marketing-automation-service"
 }
