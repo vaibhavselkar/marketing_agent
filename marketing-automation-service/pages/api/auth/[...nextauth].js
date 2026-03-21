@@ -24,6 +24,12 @@ export default NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) { token.clientId = user.clientId; token.role = user.role; token.id = user.id; }
+      // Always sync clientId from DB so it updates after onboarding without re-login
+      if (token.id && !token.clientId) {
+        await connectDB();
+        const fresh = await User.findById(token.id).lean();
+        if (fresh?.clientId) token.clientId = fresh.clientId.toString();
+      }
       return token;
     },
     async session({ session, token }) {
