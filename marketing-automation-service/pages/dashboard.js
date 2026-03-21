@@ -1,37 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
-import { 
-  Box, 
-  Container, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Chip, 
-  Button, 
-  TextField, 
-  Select, 
-  MenuItem, 
-  FormControl, 
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
+import {
+  Box,
+  Container,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
   InputLabel,
   Alert,
   Snackbar,
-  CircularProgress
+  CircularProgress,
+  Divider
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon,
   Message as MessageIcon,
   Email as EmailIcon,
   TrendingUp as TrendingUpIcon,
   PersonAdd as PersonAddIcon,
-  Settings as SettingsIcon,
   Refresh as RefreshIcon
 } from '@mui/icons-material';
 
 const Chart = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), { ssr: false });
 
 export default function Dashboard() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,13 +52,19 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    fetchAnalytics();
-  }, []);
+    if (status === 'unauthenticated') { router.push('/auth/login'); return; }
+    if (status === 'authenticated') {
+      if (!session.user.clientId) { router.push('/onboarding'); return; }
+      fetchAnalytics(session.user.clientId);
+    }
+  }, [status]);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (clientId) => {
+    const cid = clientId || session?.user?.clientId;
+    if (!cid) return;
     try {
       setLoading(true);
-      const response = await fetch('/api/email-campaigns');
+      const response = await fetch(`/api/email-campaigns?clientId=${cid}`);
       const data = await response.json();
       
       if (data.success) {
@@ -72,14 +81,12 @@ export default function Dashboard() {
 
   const handleCampaignSubmit = async (e) => {
     e.preventDefault();
-    
+    const clientId = session?.user?.clientId;
     try {
-      const response = await fetch('/api/email-campaigns', {
+      const response = await fetch(`/api/email-campaigns?clientId=${clientId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(campaignForm),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...campaignForm, clientId }),
       });
 
       const data = await response.json();
@@ -99,17 +106,12 @@ export default function Dashboard() {
       showSnackbar('Please enter a test email address', 'warning');
       return;
     }
-
+    const clientId = session?.user?.clientId;
     try {
-      const response = await fetch('/api/email-campaigns', {
+      const response = await fetch(`/api/email-campaigns?clientId=${clientId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          campaignType: 'test',
-          testEmail: campaignForm.testEmail
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignType: 'test', testEmail: campaignForm.testEmail, clientId }),
       });
 
       const data = await response.json();
@@ -211,7 +213,7 @@ export default function Dashboard() {
           </Typography>
           <Button 
             variant="outlined" 
-            onClick={fetchAnalytics}
+            onClick={() => fetchAnalytics()}
             startIcon={<RefreshIcon />}
           >
             Refresh Data
