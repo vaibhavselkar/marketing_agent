@@ -18,10 +18,17 @@ const ClientSchema = new mongoose.Schema({
   currency:          { type: String, default: '₹' },
   country:           { type: String, default: 'India' },
 
-  // ── WhatsApp (Meta Cloud API) ──────────────────────────────────────
-  whatsappAccessToken:   { type: String, default: '' },
-  whatsappPhoneNumberId: { type: String, default: '' },
-  adminWhatsappNumber:   { type: String, default: '' },  // owner's number for lead alerts
+  // ── WhatsApp (AiSensy) ────────────────────────────────────────────
+  aiSensyApiKey:            { type: String, default: '' },
+  adminWhatsappNumber:      { type: String, default: '' },
+  // Campaign names (created in AiSensy dashboard)
+  aiSensyWelcomeCampaign:   { type: String, default: 'welcome_message' },
+  aiSensyFollowupCampaign:  { type: String, default: 'follow_up' },
+  aiSensyOrderCampaign:     { type: String, default: 'order_confirmation' },
+  aiSensyFestivalCampaign:  { type: String, default: 'festival_campaign' },
+  aiSensyReengageCampaign:  { type: String, default: 're_engagement' },
+  aiSensyReviewCampaign:    { type: String, default: 'review_request' },
+  aiSensyAdminCampaign:     { type: String, default: 'new_lead_alert' },
 
   // ── Email (Gmail SMTP) ─────────────────────────────────────────────
   gmailUser:        { type: String, default: '' },

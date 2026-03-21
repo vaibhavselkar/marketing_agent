@@ -19,12 +19,16 @@ const FIELDS = {
     { key: 'ownerPhone',      label: 'Owner Phone',          placeholder: '+919876543210' },
   ],
   1: [
-    { key: 'whatsappPhoneNumberId', label: 'WhatsApp Phone Number ID', placeholder: '123456789012345', required: true,
-      help: 'Get from: Meta Developers → Your App → WhatsApp → API Setup → Phone Number ID' },
-    { key: 'whatsappAccessToken',   label: 'WhatsApp Access Token',    placeholder: 'EAAxxxxxxxxxxxxx',  required: true,
-      help: 'Get from: Meta Developers → Your App → WhatsApp → API Setup → Temporary/Permanent Token' },
-    { key: 'adminWhatsappNumber',   label: 'Your WhatsApp Number (for lead alerts)', placeholder: '+919876543210',
-      help: 'You will receive a WhatsApp notification whenever a new lead comes in' },
+    { key: 'aiSensyApiKey',       label: 'AiSensy API Key', placeholder: 'your_aisensy_api_key', required: true,
+      help: 'Get from: app.aisensy.com → Settings → API & Webhook → Copy API Key' },
+    { key: 'adminWhatsappNumber', label: 'Your WhatsApp Number (for lead alerts)', placeholder: '+919876543210',
+      help: 'You will get a WhatsApp alert on this number whenever a new lead comes in' },
+    { key: 'aiSensyWelcomeCampaign',  label: 'Welcome Campaign Name',     placeholder: 'welcome_message',
+      help: 'Name of the campaign you created in AiSensy for welcome messages' },
+    { key: 'aiSensyFollowupCampaign', label: 'Follow-up Campaign Name',   placeholder: 'follow_up',
+      help: 'Campaign name for follow-up messages' },
+    { key: 'aiSensyAdminCampaign',    label: 'Admin Alert Campaign Name', placeholder: 'new_lead_alert',
+      help: 'Campaign name for new lead notifications to you' },
   ],
   2: [
     { key: 'gmailUser',        label: 'Gmail Address',    placeholder: 'business@gmail.com', required: true,
@@ -105,10 +109,10 @@ export default function Onboarding() {
         {step < 4 && (
           <>
             <h2 style={s.title}>
-              {['Business Details', 'WhatsApp Setup', 'Email Setup', 'AI & Integrations'][step]}
+              {['Business Details', 'WhatsApp (AiSensy)', 'Email Setup', 'AI & Integrations'][step]}
             </h2>
             <p style={s.sub}>
-              {['Tell us about your business', 'Connect your WhatsApp Business number', 'Set up email sending', 'Connect Gemini AI and Google Sheets'][step]}
+              {['Tell us about your business', 'Connect AiSensy (free WhatsApp API)', 'Set up email sending', 'Connect Gemini AI and Google Sheets'][step]}
             </p>
 
             {error && <div style={s.error}>{error}</div>}
