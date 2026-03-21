@@ -5,17 +5,9 @@
     "NODE_ENV": "production"
   },
   "functions": {
-    "api/instagram-dm.js": {
-      "maxDuration": 30
-    },
-    "api/whatsapp-leads.js": {
-      "maxDuration": 30
-    },
-    "api/email-campaigns.js": {
-      "maxDuration": 60
-    },
-    "api/clients.js": {
-      "maxDuration": 30
-    }
+    "pages/api/instagram-dm.js":   { "maxDuration": 30 },
+    "pages/api/whatsapp-leads.js": { "maxDuration": 30 },
+    "pages/api/email-campaigns.js":{ "maxDuration": 60 },
+    "pages/api/clients.js":        { "maxDuration": 30 }
   }
 }
