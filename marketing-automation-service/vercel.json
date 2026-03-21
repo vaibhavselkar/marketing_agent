@@ -14,7 +14,7 @@
     "api/email-campaigns.js": {
       "maxDuration": 60
     },
-    "api/content-scheduler.js": {
+    "api/clients.js": {
       "maxDuration": 30
     }
   }
