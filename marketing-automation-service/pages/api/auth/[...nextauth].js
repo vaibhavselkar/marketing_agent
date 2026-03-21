@@ -45,8 +45,4 @@ export default NextAuth({
   },
   session: { strategy: 'jwt' },
   secret: process.env.NEXTAUTH_SECRET,
-  // Let Vercel auto-detect the URL — avoids CLIENT_FETCH_ERROR on preview deployments
-  ...(process.env.VERCEL_URL && !process.env.NEXTAUTH_URL
-    ? { url: `https://${process.env.VERCEL_URL}` }
-    : {}),
 });
