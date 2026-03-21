@@ -409,8 +409,22 @@ async function sendTestEmail(emailClient, testEmail) {
  */
 export async function GET(request) {
   try {
-    const sheetsClient = new GoogleSheetsClient();
-    
+    const { searchParams } = new URL(request.url);
+    const clientId = searchParams.get('clientId');
+
+    if (!clientId) {
+      return NextResponse.json({ success: false, error: 'clientId is required' }, { status: 400 });
+    }
+
+    let cfg;
+    try {
+      cfg = await getClientConfig(clientId);
+    } catch (e) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 404 });
+    }
+
+    const sheetsClient = new GoogleSheetsClient(cfg);
+
     if (!(await sheetsClient.validateConnection())) {
       return NextResponse.json({
         success: false,

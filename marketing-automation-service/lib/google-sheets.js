@@ -1,24 +1,24 @@
 import { google } from 'googleapis';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 /**
  * Google Sheets Client for Marketing Automation
  * Handles all Google Sheets operations for CRM, leads, and analytics
  */
 class GoogleSheetsClient {
-  constructor() {
+  /**
+   * @param {object} cfg - Client config from MongoDB
+   */
+  constructor(cfg) {
     this.auth = new google.auth.GoogleAuth({
       credentials: {
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        client_email: cfg.googleClientEmail,
+        private_key: cfg.googlePrivateKey?.replace(/\\n/g, '\n'),
       },
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
     this.sheets = google.sheets({ version: 'v4', auth: this.auth });
-    this.spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    this.spreadsheetId = cfg.googleSheetId;
   }
 
   /**
