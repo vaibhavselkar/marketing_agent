@@ -44,6 +44,17 @@ const ClientSchema = new mongoose.Schema({
   instagramPageId:      { type: String, default: '' },
   instagramVerifyToken: { type: String, default: '' },
 
+  // ── Telegram Bot (free) ───────────────────────────────────────────
+  telegramBotToken: { type: String, default: '' },
+  telegramChatId:   { type: String, default: '' }, // admin chat ID or channel ID
+
+  // ── Reddit (organic reach) ─────────────────────────────────────────
+  redditClientId:     { type: String, default: '' },
+  redditClientSecret: { type: String, default: '' },
+  redditUsername:     { type: String, default: '' },
+  redditPassword:     { type: String, default: '' },
+  redditSubreddits:   { type: String, default: '' }, // comma-separated list
+
   // ── Gemini AI ─────────────────────────────────────────────────────
   geminiApiKey: { type: String, default: '' },
 

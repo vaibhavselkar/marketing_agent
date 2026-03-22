@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSession, getSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 
-const STEPS = ['Business', 'WhatsApp', 'Email', 'Google Sheets', 'Done'];
+const STEPS = ['Business', 'WhatsApp', 'Email', 'Google Sheets', 'More Channels', 'Done'];
 
 const FIELDS = {
   0: [
@@ -49,6 +49,19 @@ const FIELDS = {
     { key: 'instagramPageId',      label: 'Facebook Page ID (optional)',       placeholder: '123456789' },
     { key: 'instagramVerifyToken', label: 'Instagram Webhook Verify Token',    placeholder: 'any_random_string' },
   ],
+  4: [
+    { key: 'telegramBotToken', label: 'Telegram Bot Token (free)', placeholder: '123456789:AAFxxxxxxxxx',
+      help: 'Free: Open Telegram → search @BotFather → /newbot → copy the token' },
+    { key: 'telegramChatId',   label: 'Telegram Chat / Channel ID', placeholder: '-1001234567890',
+      help: 'Your chat ID or channel ID. Send a message to your bot then visit: api.telegram.org/bot{TOKEN}/getUpdates' },
+    { key: 'redditClientId',     label: 'Reddit Client ID (optional)', placeholder: 'aBcDeFgHiJ',
+      help: 'Free: reddit.com/prefs/apps → Create App → Script → copy client ID' },
+    { key: 'redditClientSecret', label: 'Reddit Client Secret (optional)', placeholder: 'xxxxxxxxxxxxxxxxxxx' },
+    { key: 'redditUsername',     label: 'Reddit Username (optional)',      placeholder: 'u/yourbusiness' },
+    { key: 'redditPassword',     label: 'Reddit Password (optional)',      placeholder: '••••••••', type: 'password' },
+    { key: 'redditSubreddits',   label: 'Target Subreddits (optional)',    placeholder: 'r/india, r/IndianBusiness, r/startups',
+      help: 'Comma-separated list of subreddits where you want to post content' },
+  ],
 };
 
 export default function Onboarding() {
@@ -86,7 +99,7 @@ export default function Onboarding() {
     setLoading(false);
     if (!res.ok) { setError(data.error); return; }
     setWebhooks(data);
-    setStep(4);
+    setStep(5);
   }
 
   const fields = FIELDS[step] || [];
@@ -106,13 +119,13 @@ export default function Onboarding() {
           ))}
         </div>
 
-        {step < 4 && (
+        {step < 5 && (
           <>
             <h2 style={s.title}>
-              {['Business Details', 'WhatsApp (AiSensy)', 'Email Setup', 'AI & Integrations'][step]}
+              {['Business Details', 'WhatsApp (AiSensy)', 'Email Setup', 'AI & Integrations', 'More Free Channels'][step]}
             </h2>
             <p style={s.sub}>
-              {['Tell us about your business', 'Connect AiSensy (free WhatsApp API)', 'Set up email sending', 'Connect Gemini AI and Google Sheets'][step]}
+              {['Tell us about your business', 'Connect AiSensy (free WhatsApp API)', 'Set up email sending', 'Connect Gemini AI and Google Sheets', 'Add Telegram & Reddit for extra reach (all free)'][step]}
             </p>
 
             {error && <div style={s.error}>{error}</div>}
@@ -135,7 +148,7 @@ export default function Onboarding() {
 
             <div style={s.btnRow}>
               {step > 0 && <button style={s.backBtn} onClick={() => setStep(s => s - 1)}>Back</button>}
-              {step < 3
+              {step < 4
                 ? <button style={s.btn} onClick={next}>Continue →</button>
                 : <button style={{ ...s.btn, opacity: loading ? 0.7 : 1 }} disabled={loading} onClick={submit}>
                     {loading ? 'Setting up...' : 'Finish Setup'}
@@ -145,7 +158,7 @@ export default function Onboarding() {
           </>
         )}
 
-        {step === 4 && webhooks && (
+        {step === 5 && webhooks && (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</div>
             <h2 style={s.title}>You're all set!</h2>

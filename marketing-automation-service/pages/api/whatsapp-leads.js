@@ -1,6 +1,7 @@
 import GoogleSheetsClient from '../../lib/google-sheets.js';
 import WhatsAppClient from '../../lib/whatsapp.js';
 import EmailClient from '../../lib/email.js';
+import TelegramClient from '../../lib/telegram.js';
 import { getClientConfig } from '../../lib/config.js';
 import { log, formatPhoneNumber, validateEmail } from '../../lib/utils.js';
 import connectDB from '../../lib/db.js';
@@ -51,6 +52,7 @@ export default async function handler(req, res) {
       const sheetsClient   = new GoogleSheetsClient(cfg);
       const whatsappClient = new WhatsAppClient(cfg);
       const emailClient    = new EmailClient(cfg);
+      const telegramClient = new TelegramClient(cfg);
 
       if (!(await sheetsClient.validateConnection()))
         return res.status(500).json({ success: false, error: 'Google Sheets not configured' });
@@ -73,6 +75,7 @@ export default async function handler(req, res) {
             emailResult = await emailClient.sendWelcomeEmail(lead.email, lead.name || 'Customer');
 
           await whatsappClient.notifyAdminNewLead(lead);
+          await telegramClient.notifyAdminNewLead(lead);  // also ping Telegram if configured
           await sheetsClient.updateLeadStatus(lead.phone, 'contacted');
 
           results.push({ name: lead.name, phone: lead.phone, whatsappResult, emailResult, status: 'processed' });
@@ -105,12 +108,14 @@ export default async function handler(req, res) {
       const sheetsClient   = new GoogleSheetsClient(cfg);
       const whatsappClient = new WhatsAppClient(cfg);
       const emailClient    = new EmailClient(cfg);
+      const telegramClient = new TelegramClient(cfg);
 
       const leadData = { name, phone: formatPhoneNumber(phone), email: email || '', source: source || 'Manual', interest: interest || 'General' };
       await sheetsClient.addLead(leadData);
 
       const whatsappResult = await whatsappClient.sendWelcomeMessage(leadData.phone, leadData.name);
       await whatsappClient.notifyAdminNewLead(leadData);
+      await telegramClient.notifyAdminNewLead(leadData);
 
       let emailResult = null;
       if (leadData.email && validateEmail(leadData.email))
