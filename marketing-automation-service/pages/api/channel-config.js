@@ -4,12 +4,13 @@ import Client from '../../lib/models/Client.js';
 
 // Maps each channel to the key credential that indicates it's connected
 const CHANNEL_REQUIRED_KEY = {
-  whatsapp:  'aiSensyApiKey',
-  instagram: 'instagramAccessToken',
-  email:     'gmailUser',
-  google:    'googleSheetId',
-  telegram:  'telegramBotToken',
-  reddit:    'redditClientId',
+  whatsapp:    'aiSensyApiKey',
+  instagram:   'instagramAccessToken',
+  email:       'gmailUser',
+  google:      'googleSheetId',
+  telegram:    'telegramBotToken',
+  reddit:      'redditClientId',
+  facebookAds: 'instagramVerifyToken',
 };
 
 // All fields that belong to each channel (allowed to be updated via PATCH)

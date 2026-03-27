@@ -3,12 +3,13 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 
 const CHANNELS = [
-  { id: 'whatsapp',  name: 'WhatsApp',          icon: '💬', color: '#25D366', desc: 'Automated messages to leads via AiSensy' },
-  { id: 'instagram', name: 'Instagram DM',       icon: '📸', color: '#E1306C', desc: 'AI auto-replies to DMs using Gemini' },
-  { id: 'email',     name: 'Email',              icon: '📧', color: '#4285F4', desc: 'Welcome, follow-up & festival emails via Gmail' },
-  { id: 'google',    name: 'Google Sheets + AI', icon: '📊', color: '#0F9D58', desc: 'Lead CRM + Gemini AI key' },
-  { id: 'telegram',  name: 'Telegram',           icon: '✈️', color: '#0088cc', desc: 'Instant lead alerts (free, unlimited)' },
-  { id: 'reddit',    name: 'Reddit',             icon: '🔴', color: '#FF4500', desc: 'Post to subreddits for organic reach' },
+  { id: 'whatsapp',     name: 'WhatsApp',          icon: '💬', color: '#25D366', desc: 'Automated messages to leads via AiSensy' },
+  { id: 'instagram',    name: 'Instagram DM',       icon: '📸', color: '#E1306C', desc: 'AI auto-replies to DMs using Gemini' },
+  { id: 'email',        name: 'Email',              icon: '📧', color: '#4285F4', desc: 'Welcome, follow-up & festival emails via Gmail' },
+  { id: 'google',       name: 'Google Sheets + AI', icon: '📊', color: '#0F9D58', desc: 'Lead CRM + Gemini AI key' },
+  { id: 'telegram',     name: 'Telegram',           icon: '✈️', color: '#0088cc', desc: 'Instant lead alerts (free, unlimited)' },
+  { id: 'reddit',       name: 'Reddit',             icon: '🔴', color: '#FF4500', desc: 'Post to subreddits for organic reach' },
+  { id: 'facebookAds',  name: 'Facebook Lead Ads',  icon: '📣', color: '#1877F2', desc: 'Capture leads from Facebook & Instagram ads instantly' },
 ];
 
 const CHANNEL_FIELDS = {
@@ -59,6 +60,10 @@ const CHANNEL_FIELDS = {
     { key: 'redditPassword',     label: 'Reddit Password',      placeholder: '••••••••', type: 'password' },
     { key: 'redditSubreddits',   label: 'Target Subreddits',    placeholder: 'r/india, r/IndianBusiness, r/startups',
       help: 'Comma-separated list of subreddits to post content to' },
+  ],
+  facebookAds: [
+    { key: 'instagramVerifyToken', label: 'Webhook Verify Token', placeholder: 'any_random_string',
+      help: 'Any string you choose — enter this same value in Facebook Developer Console when setting up the webhook' },
   ],
 };
 
@@ -167,14 +172,14 @@ export default function Settings() {
                 <div key={ch.id} style={s.card}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                     <span style={{ fontSize: '30px' }}>{ch.icon}</span>
-                    <span style={{ ...s.badge, background: isConnected ? '#d1fae5', color: isConnected ? '#065f46' : '#6b7280', border: `1px solid ${isConnected ? '#6ee7b7' : '#e5e7eb'}` }}>
+                    <span style={{ ...s.badge, background: isConnected ? '#d1fae5' : '#f3f4f6', color: isConnected ? '#065f46' : '#6b7280', border: `1px solid ${isConnected ? '#6ee7b7' : '#e5e7eb'}` }}>
                       {isConnected ? '✓ Connected' : 'Not connected'}
                     </span>
                   </div>
                   <div style={{ fontWeight: 700, fontSize: '15px', color: '#1a1a1a', marginBottom: '4px' }}>{ch.name}</div>
                   <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px', lineHeight: '1.5' }}>{ch.desc}</div>
                   <button
-                    style={{ ...s.actionBtn, background: isConnected ? '#f3f4f6', color: '#374151', borderColor: '#e5e7eb' }}
+                    style={{ ...s.actionBtn, background: isConnected ? '#f3f4f6' : '#6366f1', color: isConnected ? '#374151' : '#fff', borderColor: isConnected ? '#e5e7eb' : '#6366f1' }}
                     onClick={() => openChannel(ch.id)}
                   >
                     {isConnected ? 'Update credentials' : `Connect ${ch.name}`}
@@ -199,6 +204,22 @@ export default function Settings() {
                 ? 'Update your credentials below. Leave fields blank to keep existing values.'
                 : 'Enter your credentials to connect this channel.'}
             </p>
+
+            {/* Facebook Lead Ads — show webhook URL instructions */}
+            {activeChannel === 'facebookAds' && (
+              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '14px 16px', marginBottom: '20px', fontSize: '13px' }}>
+                <p style={{ margin: '0 0 8px', fontWeight: 700, color: '#1e40af' }}>📣 How to connect Facebook Lead Ads:</p>
+                <ol style={{ margin: 0, paddingLeft: '18px', color: '#374151', lineHeight: '1.8' }}>
+                  <li>Set a Verify Token below (any random string)</li>
+                  <li>Go to <strong>Facebook Developer Console → Your App → Webhooks</strong></li>
+                  <li>Subscribe to: <strong>leadgen</strong></li>
+                  <li>Paste this as your Webhook URL:</li>
+                </ol>
+                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '8px 12px', marginTop: '8px', fontFamily: 'monospace', fontSize: '12px', wordBreak: 'break-all', color: '#1a1a1a' }}>
+                  {typeof window !== 'undefined' ? `${window.location.origin}/api/facebook-leads?clientId=${session?.user?.clientId}` : 'https://yourdomain.com/api/facebook-leads?clientId=YOUR_CLIENT_ID'}
+                </div>
+              </div>
+            )}
 
             {error && <div style={s.error}>{error}</div>}
 

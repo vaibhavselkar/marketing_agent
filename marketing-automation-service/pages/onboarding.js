@@ -3,12 +3,13 @@ import { useSession, getSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 
 const CHANNELS = [
-  { id: 'whatsapp',  name: 'WhatsApp',          icon: '💬', color: '#25D366', desc: 'Automated welcome & follow-up messages to leads' },
-  { id: 'instagram', name: 'Instagram DM',       icon: '📸', color: '#E1306C', desc: 'AI auto-replies to every DM using Gemini' },
-  { id: 'email',     name: 'Email',              icon: '📧', color: '#4285F4', desc: 'Welcome, follow-up & festival email campaigns' },
-  { id: 'google',    name: 'Google Sheets + AI', icon: '📊', color: '#0F9D58', desc: 'CRM to store & track all leads + Gemini AI' },
-  { id: 'telegram',  name: 'Telegram',           icon: '✈️', color: '#0088cc', desc: 'Instant lead alerts on your phone (free, unlimited)' },
-  { id: 'reddit',    name: 'Reddit',             icon: '🔴', color: '#FF4500', desc: 'Post to subreddits for free organic reach' },
+  { id: 'whatsapp',    name: 'WhatsApp',          icon: '💬', color: '#25D366', desc: 'Automated welcome & follow-up messages to leads' },
+  { id: 'instagram',   name: 'Instagram DM',       icon: '📸', color: '#E1306C', desc: 'AI auto-replies to every DM using Gemini' },
+  { id: 'email',       name: 'Email',              icon: '📧', color: '#4285F4', desc: 'Welcome, follow-up & festival email campaigns' },
+  { id: 'google',      name: 'Google Sheets + AI', icon: '📊', color: '#0F9D58', desc: 'CRM to store & track all leads + Gemini AI' },
+  { id: 'telegram',    name: 'Telegram',           icon: '✈️', color: '#0088cc', desc: 'Instant lead alerts on your phone (free, unlimited)' },
+  { id: 'reddit',      name: 'Reddit',             icon: '🔴', color: '#FF4500', desc: 'Post to subreddits for free organic reach' },
+  { id: 'facebookAds', name: 'Facebook Lead Ads',  icon: '📣', color: '#1877F2', desc: 'Capture leads from Facebook & Instagram ads instantly' },
 ];
 
 const BUSINESS_FIELDS = [
@@ -75,6 +76,10 @@ const CHANNEL_FIELDS = {
     { key: 'redditPassword',     label: 'Reddit Password',      placeholder: '••••••••',            required: true, type: 'password' },
     { key: 'redditSubreddits',   label: 'Target Subreddits',    placeholder: 'r/india, r/IndianBusiness, r/startups',
       help: 'Comma-separated list of subreddits to post content to' },
+  ],
+  facebookAds: [
+    { key: 'instagramVerifyToken', label: 'Webhook Verify Token', placeholder: 'any_random_string', required: true,
+      help: 'Make up any random string. You will use this in Facebook Developer Console → Webhooks when adding the webhook URL for leadgen events.' },
   ],
 };
 

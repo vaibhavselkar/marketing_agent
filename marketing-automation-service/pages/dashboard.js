@@ -32,12 +32,13 @@ import {
 } from '@mui/icons-material';
 
 const CHANNEL_META = [
-  { id: 'whatsapp',  name: 'WhatsApp',          icon: '💬', color: '#25D366' },
-  { id: 'instagram', name: 'Instagram DM',       icon: '📸', color: '#E1306C' },
-  { id: 'email',     name: 'Email',              icon: '📧', color: '#4285F4' },
-  { id: 'google',    name: 'Google Sheets + AI', icon: '📊', color: '#0F9D58' },
-  { id: 'telegram',  name: 'Telegram',           icon: '✈️', color: '#0088cc' },
-  { id: 'reddit',    name: 'Reddit',             icon: '🔴', color: '#FF4500' },
+  { id: 'whatsapp',    name: 'WhatsApp',          icon: '💬', color: '#25D366' },
+  { id: 'instagram',   name: 'Instagram DM',       icon: '📸', color: '#E1306C' },
+  { id: 'email',       name: 'Email',              icon: '📧', color: '#4285F4' },
+  { id: 'google',      name: 'Google Sheets + AI', icon: '📊', color: '#0F9D58' },
+  { id: 'telegram',    name: 'Telegram',           icon: '✈️', color: '#0088cc' },
+  { id: 'reddit',      name: 'Reddit',             icon: '🔴', color: '#FF4500' },
+  { id: 'facebookAds', name: 'Facebook Lead Ads',  icon: '📣', color: '#1877F2' },
 ];
 
 const Chart = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), { ssr: false });
@@ -231,18 +232,35 @@ export default function Dashboard() {
 
       <Container maxWidth="lg">
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
             Marketing Automation Dashboard
           </Typography>
-          <Button 
-            variant="outlined" 
-            onClick={() => fetchAnalytics()}
-            startIcon={<RefreshIcon />}
-          >
-            Refresh Data
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="contained" onClick={() => router.push('/content-studio')}
+              sx={{ background: '#6366f1', '&:hover': { background: '#4f46e5' } }}>
+              ✨ Content Studio
+            </Button>
+            <Button variant="outlined" onClick={() => fetchAnalytics()} startIcon={<RefreshIcon />}>
+              Refresh
+            </Button>
+          </Box>
         </Box>
+
+        {/* Lead Form URL */}
+        {session?.user?.clientId && (
+          <Box sx={{ background: '#f5f3ff', border: '1px solid #e0e7ff', borderRadius: '10px', p: '12px 16px', mb: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>📋 Your Lead Capture Link:</Typography>
+            <Typography variant="body2" sx={{ color: '#6366f1', fontFamily: 'monospace', flex: 1, wordBreak: 'break-all' }}>
+              {typeof window !== 'undefined' ? `${window.location.origin}/lead-form/${session.user.clientId}` : ''}
+            </Typography>
+            <Button size="small" variant="contained" sx={{ background: '#6366f1', '&:hover': { background: '#4f46e5' }, flexShrink: 0 }}
+              onClick={() => navigator.clipboard.writeText(`${window.location.origin}/lead-form/${session.user.clientId}`)}>
+              Copy Link
+            </Button>
+            <Typography variant="caption" color="textSecondary">Put this in Instagram bio, Reddit posts, WhatsApp status</Typography>
+          </Box>
+        )}
 
         {/* Key Metrics */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
