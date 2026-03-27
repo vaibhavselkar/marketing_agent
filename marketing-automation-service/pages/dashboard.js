@@ -27,8 +27,18 @@ import {
   Email as EmailIcon,
   TrendingUp as TrendingUpIcon,
   PersonAdd as PersonAddIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
+
+const CHANNEL_META = [
+  { id: 'whatsapp',  name: 'WhatsApp',          icon: '💬', color: '#25D366' },
+  { id: 'instagram', name: 'Instagram DM',       icon: '📸', color: '#E1306C' },
+  { id: 'email',     name: 'Email',              icon: '📧', color: '#4285F4' },
+  { id: 'google',    name: 'Google Sheets + AI', icon: '📊', color: '#0F9D58' },
+  { id: 'telegram',  name: 'Telegram',           icon: '✈️', color: '#0088cc' },
+  { id: 'reddit',    name: 'Reddit',             icon: '🔴', color: '#FF4500' },
+];
 
 const Chart = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), { ssr: false });
 
@@ -36,6 +46,7 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [analytics, setAnalytics] = useState(null);
+  const [connected, setConnected] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -64,21 +75,26 @@ export default function Dashboard() {
     if (!cid) return;
     try {
       setLoading(true);
-      const [campaignRes, waRes] = await Promise.all([
+      const [campaignRes, waRes, channelRes] = await Promise.all([
         fetch(`/api/email-campaigns?clientId=${cid}`),
-        fetch(`/api/whatsapp-leads?clientId=${cid}`)
+        fetch(`/api/whatsapp-leads?clientId=${cid}`),
+        fetch('/api/channel-config'),
       ]);
       const campaignData = await campaignRes.json();
       const waData       = await waRes.json();
+      const channelData  = await channelRes.json();
       const data = {
         ...campaignData,
         data: { ...campaignData.data, whatsappUsage: waData.data?.whatsappUsage }
       };
-      
+
       if (data.success) {
         setAnalytics(data.data);
       } else {
         setError(data.error);
+      }
+      if (channelData.success) {
+        setConnected(channelData.connected);
       }
     } catch (err) {
       setError('Failed to fetch analytics');
@@ -419,6 +435,33 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </Grid>
+        </Grid>
+
+        {/* Channels Status */}
+        <Box sx={{ mt: 4, mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">Your Channels</Typography>
+          <Button variant="outlined" size="small" startIcon={<SettingsIcon />} onClick={() => router.push('/settings')}>
+            Manage Channels
+          </Button>
+        </Box>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          {CHANNEL_META.map(ch => {
+            const isConnected = connected[ch.id];
+            return (
+              <Grid item xs={6} sm={4} md={2} key={ch.id}>
+                <Card sx={{ textAlign: 'center', border: `1px solid ${isConnected ? ch.color + '55' : '#e5e7eb'}`, boxShadow: 'none' }}>
+                  <CardContent sx={{ py: 2, px: 1, '&:last-child': { pb: 2 } }}>
+                    <Typography sx={{ fontSize: '24px', mb: 0.5 }}>{ch.icon}</Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 0.5, fontSize: '11px' }}>{ch.name}</Typography>
+                    {isConnected
+                      ? <Chip label="Connected" size="small" sx={{ fontSize: '10px', height: '18px', background: ch.color + '20', color: ch.color, fontWeight: 700 }} />
+                      : <Chip label="Not set up" size="small" variant="outlined" sx={{ fontSize: '10px', height: '18px' }} onClick={() => router.push(`/settings?channel=${ch.id}`)} clickable />
+                    }
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
         </Grid>
 
         {/* Source and Interest Breakdown */}
